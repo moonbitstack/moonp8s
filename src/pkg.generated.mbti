@@ -64,9 +64,15 @@ pub using @metric {type Info}
 
 pub using @metric {type Kind}
 
+pub using @metric {type LocalCounter}
+
 pub using @metric {type MetricFamily}
 
 pub using @metric {type Point}
+
+pub using @metric {type ProcessCollector}
+
+pub using @metric {type ProcessStats}
 
 pub using @push {type PushRequest}
 

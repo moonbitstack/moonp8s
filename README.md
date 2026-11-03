@@ -44,13 +44,25 @@ let content_type = @moonp8s.Format::OpenMetrics100.content_type()
 
 | Type | Methods | Notes |
 |:--|:--|:--|
-| `Counter` | `inc(by~, exemplar?)`, `get()` | Only increases; a negative step is refused. |
-| `Gauge` | `set(v, timestamp?)`, `inc(by~)`, `dec(by~)`, `get()` | Pass the timestamp to date a sample. |
+| `Counter` | `inc(by~, exemplar?)`, `reset(created?)`, `get()` | Only increases; a negative step is refused. |
+| `Gauge` | `set(v, timestamp?)`, `inc(by~)`, `dec(by~)`, `set_function(f)`, `get()` | Pass the timestamp to date a sample; a function replaces the stored value. |
 | `Histogram` | `observe(v, exemplar?)`, `snapshot()` | Buckets from `buckets~`; `linear` and `exponential` build them. |
 | `GaugeHistogram` | `observe`, `snapshot()` | A gauge's sum and count over histogram buckets. |
 | `Summary` | `observe(v)`, `snapshot()` | Count and sum by default; `quantiles~` adds estimates. |
 | `Info` | `Info::new(labels)` | A fixed label set whose value is 1. |
 | `StateSet` | `set`, `unset`, `set_many`, `get` | `StateSet::exclusive` keeps exactly one state true. |
+
+A hot counter can accumulate through a shard and flush when it is scraped:
+
+```moonbit
+let shard = requests.shard()
+shard.inc()
+shard.flush()
+```
+
+`ProcessCollector` exports the seven `process_*` series from a `ProcessStats`
+value; the caller reads the numbers, so the collector stays portable and does
+no I/O of its own.
 
 The default histogram buckets are the shared client defaults, 0.005 through 10:
 
@@ -156,6 +168,12 @@ let wrapped = @moonp8s.middleware(registry)
 | `moonbitstack/moonp8s/expo` | Both text formats, their negotiation, and the parser. |
 | `moonbitstack/moonp8s/push` | Push gateway request construction. |
 | `moonbitstack/moonp8s/asgi` | The `/metrics` handler and the counting middleware. |
+
+## Migration
+
+`moonbitstack/moonp8s/compat` rebuilds the legacy counter vector, server metric
+set, and remote report writer on the registry model, so an existing caller can
+move over one import at a time.
 
 ## License
 
