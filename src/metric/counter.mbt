@@ -15,7 +15,7 @@ pub(open) trait Metric {
 /// counter that goes down is a gauge.
 pub struct Counter {
   priv mut value : Double
-  priv created : Double?
+  priv mut created : Double?
   priv mut exemplar : Exemplar?
 }
 
@@ -36,9 +36,26 @@ pub fn Counter::inc(
   if by < 0.0 {
     raise Refused("counter can only increase, got " + by.to_string())
   }
-  self.value = self.value + by
+  self.accrue(by)
   match exemplar {
     Some(e) => self.exemplar = Some(e)
+    None => ()
+  }
+}
+
+///|
+fn Counter::accrue(self : Counter, by : Double) -> Unit {
+  self.value = self.value + by
+}
+
+///|
+/// Restart the counter at zero, optionally dating the reset as a new creation
+/// time. Use this when a logical process restarts without restarting the
+/// program.
+pub fn Counter::reset(self : Counter, created? : Double) -> Unit {
+  self.value = 0.0
+  match created {
+    Some(c) => self.created = Some(c)
     None => ()
   }
 }

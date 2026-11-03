@@ -19,6 +19,15 @@ fn default_buckets() -> Array[Double] {
 ///|
 /// Bounds must be finite and strictly increasing; the implicit `+Inf` bucket is
 /// added at encoding time, so passing infinity here is refused.
+fn copy_bounds(bounds : Array[Double]) -> Array[Double] {
+  let out : Array[Double] = []
+  for b in bounds {
+    out.push(b)
+  }
+  out
+}
+
+///|
 fn check_buckets(bounds : Array[Double]) -> Unit raise Refused {
   if bounds.length() == 0 {
     raise Refused("a histogram needs at least one bucket")
@@ -111,9 +120,10 @@ pub fn Histogram::new(
   created? : Double,
 ) -> Histogram raise Refused {
   check_buckets(buckets)
-  let n = buckets.length() + 1
+  let bounds = copy_bounds(buckets)
+  let n = bounds.length() + 1
   {
-    bounds: buckets,
+    bounds,
     counts: Array::make(n, 0L),
     sum: 0.0,
     count: 0L,

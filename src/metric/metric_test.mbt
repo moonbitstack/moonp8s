@@ -244,3 +244,30 @@ test "names are validated by the OpenMetrics character rules" {
   assert_true(@metric.is_valid_unit("seconds"))
   assert_true(!@metric.is_valid_unit("1seconds"))
 }
+
+///|
+test "a counter resets to zero" {
+  let counter = @metric.Counter::new(created=1700000000.0)
+  counter.inc(by=3.0)
+  counter.reset(created=1700000100.0)
+  assert_true(counter.get() == 0.0)
+  let point = counter.points()[0]
+  match point.created {
+    Some(c) => assert_true(c == 1700000100.0)
+    None => abort("expected a creation time")
+  }
+}
+
+///|
+test "a gauge can take its value from a function" {
+  let gauge = @metric.Gauge::new()
+  let mut current = 1.0
+  gauge.set_function(fn() { current })
+  assert_true(gauge.get() == 1.0)
+  current = 4.0
+  assert_true(gauge.get() == 4.0)
+  gauge.set(9.0)
+  assert_true(gauge.get() == 4.0)
+  gauge.inc(by=2.0)
+  assert_true(gauge.get() == 4.0)
+}
