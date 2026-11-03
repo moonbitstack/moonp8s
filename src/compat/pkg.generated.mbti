@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/compat"
+
+import {
+  "moonbitstack/moonp8s/metric",
+}
+
+// Values
+pub let default_latency_buckets : Array[Double]
+
+// Errors
+
+// Types and methods
+pub struct CounterVec {
+  // private fields
+}
+pub fn CounterVec::add(Self, String, Int64) -> Unit raise @metric.Refused
+pub fn CounterVec::inc(Self, String) -> Unit raise @metric.Refused
+pub fn CounterVec::kind(Self) -> @metric.Kind
+pub fn CounterVec::labels(Self) -> Array[String]
+pub fn CounterVec::new(label? : String) -> Self
+pub fn CounterVec::points(Self) -> Array[@metric.Point]
+pub fn CounterVec::total(Self) -> Int64
+pub fn CounterVec::value(Self, String) -> Int64
+pub impl @metric.Metric for CounterVec
+
+pub(all) struct RemoteRequest {
+  http_method : String
+  url : String
+  headers : Array[(String, String)]
+  body : String
+}
+
+pub struct RemoteWriter {
+  // private fields
+}
+pub fn RemoteWriter::new(String) -> Self
+pub fn RemoteWriter::request(Self, StatReport) -> RemoteRequest
+
+pub struct ServerMetrics {
+  // private fields
+}
+pub fn ServerMetrics::latency(Self) -> @metric.Histogram
+pub fn ServerMetrics::new() -> Self raise @metric.Refused
+pub fn ServerMetrics::register(Self, @metric.Registry, prefix? : String) -> Unit raise @metric.Refused
+pub fn ServerMetrics::requests(Self) -> CounterVec
+
+pub(all) struct StatReport {
+  name : String
+  timestamp : Int64
+  pid : Int64
+  reqs_per_second : Double
+  drops : Int64
+  average : Double
+  median : Double
+  top90th : Double
+  top99th : Double
+  top99p9th : Double
+}
+
+// Type aliases
+
+// Traits

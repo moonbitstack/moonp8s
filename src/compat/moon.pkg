@@ -1,0 +1,6 @@
+// The migration surface for moonzero's `metric` package: the counter vector,
+// the server metric set, and the remote report writer, rebuilt on the new model.
+import {
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+}
