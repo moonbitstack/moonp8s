@@ -1,59 +1,162 @@
-# CHANGE-ME
+# moonp8s
 
-One sentence saying what this is.
+Prometheus metrics for MoonBit: the metric types, a registry, both text
+exposition formats, a parser for them, push gateway requests, and an ASGI
+handler. It is a data model and a format implementation, not a server: it never
+opens a socket and never reads a clock, so a scrape and a push stay something
+the caller schedules.
 
-```moonbit
-@CHANGE-ME.greet("moonbit")
-```
-
-Run `moon run src/examples/tour` for the whole surface in one go.
-
-## Starting from this template
-
-1. `gh repo create moonbitstack/<name> --template moonbitstack/moonkit --public`
-2. Replace `CHANGE-ME` everywhere: `moon.mod` (name and repository), the
-   `moon.pkg` files and sources that import the library, and this file's title.
-3. The library is the root package in `src/`, so users write `@<name>.f`. Split it
-   into subpackages named after what they do (`base64/`, `sha2/`, `jwt/`) only
-   where a user would want one without the rest. Delete `src/cmd/` if the
-   repository ships no binary.
-4. Fill in `keywords` and `description` in `moon.mod`. The description is what
-   mooncakes shows, so it says what the package is and what it is not.
-5. Write the specification link into every `moon.pkg`.
-
-## What is here and what is not
-
-| Carried | Why |
-|:--|:--|
-| `.github/workflows/` | GitHub does not inherit workflows; every repository needs its own copy |
-| `moon.mod`, `src/`, `src/cmd/main/`, `src/examples/tour/` | Sources under `src/` so the root holds only entry points; the library is the root package, the binary and the examples sit beside it |
-| `.gitignore`, `.moonignore` | The second one exists because `.gitignore`'s `!.git*` would otherwise pull the whole object database into a published tarball |
-| `LICENSE` | Apache-2.0, the same across the organisation |
-
-**Issue and pull-request templates are not here.** The organisation's `.github`
-repository supplies them to every repository that has none of its own; a copy
-here would shadow that one and then drift from it. A repository adds its own
-only when it needs something the organisation's does not cover.
-
-## The gate
-
-Every commit passes this, with each exit code seen to be zero:
+## Install
 
 ```bash
-moon clean && moon fmt && moon check --target all --deny-warn \
-  && moon build --target all && moon test --target all
+moon add moonbitstack/moonp8s
 ```
 
-Before a release, `moon info --target all && git diff --exit-code` as well: the
-generated interface is checked in, and a difference means the interface moved
-without anyone saying so.
+## Quick start
 
-## Releasing
+```moonbit
+import {
+  "moonbitstack/moonp8s",
+  "moonbitstack/moonp8s/metric",
+}
 
-Push a signed tag `v<version>`. `release.yml` runs the tests first and publishes
-only if they pass and the organisation variable `MOONCAKES_PUBLISH` is `true`.
-The major version stays at 0.
+try {
+  let registry = @moonp8s.Registry::new()
+  let requests = registry.counter("http_requests", "HTTP requests.")
+  requests.inc()
+  let latency = registry.histogram("request_latency_seconds", "Latency.")
+  latency.observe(0.25)
+  println(@moonp8s.text(registry.collect()))
+} catch {
+  @metric.Refused(message) => println("refused: " + message)
+}
+```
 
-## Licence
+`text` writes the compatibility format, version 0.0.4. `openmetrics` writes
+OpenMetrics 1.0 and ends with `# EOF`:
+
+```moonbit
+let body = @moonp8s.openmetrics(registry.collect())
+let content_type = @moonp8s.Format::OpenMetrics100.content_type()
+```
+
+## Metric types
+
+| Type | Methods | Notes |
+|:--|:--|:--|
+| `Counter` | `inc(by~, exemplar?)`, `get()` | Only increases; a negative step is refused. |
+| `Gauge` | `set(v, timestamp?)`, `inc(by~)`, `dec(by~)`, `get()` | Pass the timestamp to date a sample. |
+| `Histogram` | `observe(v, exemplar?)`, `snapshot()` | Buckets from `buckets~`; `linear` and `exponential` build them. |
+| `GaugeHistogram` | `observe`, `snapshot()` | A gauge's sum and count over histogram buckets. |
+| `Summary` | `observe(v)`, `snapshot()` | Count and sum by default; `quantiles~` adds estimates. |
+| `Info` | `Info::new(labels)` | A fixed label set whose value is 1. |
+| `StateSet` | `set`, `unset`, `set_many`, `get` | `StateSet::exclusive` keeps exactly one state true. |
+
+The default histogram buckets are the shared client defaults, 0.005 through 10:
+
+```moonbit
+let h = @moonp8s.Histogram::new(buckets=@moonp8s.linear(1.0, 1.0, 5))
+```
+
+A summary with quantiles uses a Greenwald-Khanna sketch, so memory grows with
+the log of the observation count rather than with the count:
+
+```moonbit
+let s = @moonp8s.Summary::new(quantiles=[(0.5, 0.01), (0.9, 0.01), (0.99, 0.001)])
+```
+
+## Labels and families
+
+`Family` fixes the label names at construction and creates one child per
+combination of values:
+
+```moonbit
+let requests = @moonp8s.Family::new(["method", "code"], fn() {
+  @moonp8s.Counter::new()
+})
+requests.labels(["GET", "200"]).inc()
+requests.labels(["POST", "500"]).inc(by=2.0)
+```
+
+When the label combination is better expressed as a record, implement
+`LabelSet` and use `TypedFamily`:
+
+```moonbit
+struct Route {
+  method : String
+  path : String
+} derive(Eq, Hash)
+
+impl @moonp8s.LabelSet for Route with pairs(self) {
+  [("method", self.method), ("path", self.path)]
+}
+```
+
+## Registry
+
+A registry applies an optional name prefix and constant labels, refuses an
+invalid name, a duplicate name, and an invalid unit, and collects everything in
+registration order:
+
+```moonbit
+let registry = @moonp8s.Registry::new(prefix="app", labels=[("region", "eu")])
+let requests = registry.counter("http_requests", "HTTP requests.")
+let sub = registry.sub(prefix="http", labels=[("server", "a")])
+```
+
+A custom source implements `Collector` and is added with `add`; the registry
+applies its prefix and constant labels to the families the collector returns.
+
+## Exposition
+
+| Function | Result |
+|:--|:--|
+| `text(families)` | Prometheus text format, version 0.0.4 |
+| `openmetrics(families)` | OpenMetrics text format, version 1.0.0, ending in `# EOF` |
+| `negotiate(accept)` | `Format` chosen from an `Accept` header |
+| `parse(text, format~)` | the families an exposition describes |
+
+`parse` reads both formats. The compatibility format is lossy for info and
+state sets, which it spells as gauges; OpenMetrics keeps them.
+
+## Push gateway
+
+`push`, `push_add`, and `delete` build the request; the caller sends it:
+
+```moonbit
+let request = @moonp8s.push(
+  "pushgateway.local",
+  "batch",
+  registry.collect(),
+  grouping_key=[("instance", "worker-1")],
+)
+println(request.http_method + " " + request.path)
+println(request.body)
+```
+
+Grouping key values that contain a slash or a space, and empty values, use the
+gateway's `@base64` form.
+
+## ASGI
+
+`app` serves `/metrics`; `middleware` counts requests and observes their
+duration. The clock is a parameter so a test can drive time:
+
+```moonbit
+let handler = @moonp8s.app(registry)
+let wrapped = @moonp8s.middleware(registry)
+```
+
+## Packages
+
+| Package | Contents |
+|:--|:--|
+| `moonbitstack/moonp8s` | Re-exports the common types and functions. |
+| `moonbitstack/moonp8s/metric` | Metric types, families, the registry, and the snapshot model. |
+| `moonbitstack/moonp8s/expo` | Both text formats, their negotiation, and the parser. |
+| `moonbitstack/moonp8s/push` | Push gateway request construction. |
+| `moonbitstack/moonp8s/asgi` | The `/metrics` handler and the counting middleware. |
+
+## License
 
 Apache-2.0.
