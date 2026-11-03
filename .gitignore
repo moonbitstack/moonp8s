@@ -3,3 +3,6 @@
 !.moonignore
 _*
 target/
+
+# The docs engine is a build product (scripts/build-docs.sh); the site imports it.
+docs/engine/

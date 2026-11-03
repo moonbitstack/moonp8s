@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>moonp8s — Prometheus metrics for MoonBit</title>
+    <meta
+      name="description"
+      content="Prometheus metrics for MoonBit: counters, gauges, histograms, summaries and the two text exposition formats a scrape can read."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0a08'/%3E%3Cpath d='M3 3.5h10M3 8h10M3 12.5h10' stroke='%23f2ebe0' stroke-opacity='.3'/%3E%3Cpath d='M6 2v12' stroke='%23e9a05c'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="theme.js"></script>
+    <script src="version.js"></script>
+  </head>
+  <body data-ruler="window">
+    <a class="skip" href="#main">Skip to the text</a>
+
+    <!-- The page's scrollbar: a measuring scale, fixed, so it costs no layout. -->
+    <div
+      class="ruler"
+      id="ruler"
+      role="scrollbar"
+      aria-controls="main"
+      aria-orientation="vertical"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="Position in the sheet"
+      tabindex="0"
+    >
+      <div class="ruler-thumb" id="ruler-thumb"></div>
+    </div>
+    <div class="ruler-readout" aria-hidden="true">
+      <span id="readout-window">window 15 s</span>
+      <b id="readout-line">#0127 · T+0.0 s</b>
+    </div>
+
+    <div class="sheet" id="main">
+      <header class="masthead">
+        <div class="topline">
+          <span class="brand">
+            <a class="wordmark" href="./">moonp8s</a>
+            <span class="marginalia wide-only"
+              >Prometheus metrics · two text formats · MoonBit</span
+            >
+            <span class="marginalia narrow-only">Prometheus · MoonBit</span>
+          </span>
+          <nav class="nav" aria-label="Sections">
+            <a href="./" aria-current="page">Home</a>
+            <a href="guide.html">Guide</a>
+            <a href="api.html">API</a>
+            <a href="showcase.html">Showcase</a>
+            <a href="examples.html">Examples</a>
+          </nav>
+          <span class="toplinks">
+            <a class="toplink" href="https://github.com/moonbitstack/moonp8s">GitHub</a>
+            <button class="theme" id="theme" type="button" aria-label="Switch plate">
+              paper
+            </button>
+          </span>
+        </div>
+
+        <div class="masthead-head">
+          <h1 class="display">Counted, not<br /><em>remembered.</em></h1>
+          <p class="lede">
+            moonp8s is Prometheus metrics for MoonBit. Fifteen seconds of samples
+            become one field of counters — and the two text formats a scrape can
+            read.
+          </p>
+        </div>
+
+        <div class="field-wrap" id="plate-1" data-ruler-section="the scrape">
+          <div class="field" id="field">
+            <div class="row-labels" id="row-labels" aria-hidden="true"></div>
+            <div class="cells" id="cells" role="img" aria-label="Samples of one scrape, by second and by bucket"></div>
+            <div class="fold" id="fold" aria-hidden="true"></div>
+            <div class="scan" id="scan" aria-hidden="true"></div>
+            <div class="budget-rule" id="budget-rule" aria-hidden="true"></div>
+          </div>
+          <div class="field-axis" aria-hidden="true">
+            <span></span>
+            <div class="ticks" id="ticks"></div>
+            <span class="legend">each row → Σ</span>
+          </div>
+          <div class="field-readout" id="field-readout">
+            <span class="hint">rest the pointer on a cell</span>
+            <span id="field-hover"></span>
+          </div>
+        </div>
+
+        <div class="masthead-foot">
+          <div class="facts">
+            <span class="fact"><b id="fact-samples">—</b> samples</span>
+            <span class="fact"><b id="fact-window">—</b> s window</span>
+            <span class="fact"><b id="fact-rate">—</b> s⁻¹</span>
+            <span class="fact is-over"><b id="fact-over">—</b> over budget</span>
+            <span class="fact"><b id="fact-p90">—</b> s p90</span>
+          </div>
+          <nav class="masthead-index" aria-label="Plates">
+            <a href="#plate-1"><span>01</span>the scrape</a>
+            <a href="#plate-2"><span>02</span>the exposition</a>
+            <a href="#plate-3"><span>03</span>the aggregation</a>
+            <a href="#plate-4"><span>04</span>the seams</a>
+            <a href="#plate-5"><span>05</span>the index</a>
+          </nav>
+        </div>
+      </header>
+
+      <section class="plate" id="plate-2" data-ruler-section="the exposition">
+        <div class="plate-head">
+          <span class="plate-no">02 / 05</span>
+          <h2>Everything a scrape reads is one line.</h2>
+          <p class="note">
+            A name, its labels in braces, a number and the instant it was read. The
+            rest of this page is that line, arranged. The specimen below was written
+            by the encoder in this repository — copied, not typed.
+          </p>
+        </div>
+        <div class="plate-body">
+          <div class="specimen-wrap">
+            <div class="specimen-head">
+              <p class="specimen" id="specimen">
+                <span class="field" data-field="name">—</span><span class="field is-label" data-field="labels">—</span>
+                <span class="field is-value" data-field="value">—</span>
+                <span class="field is-time" data-field="time">—</span>
+              </p>
+              <div>
+                <button class="copy" type="button" data-copy="#specimen">copy the line</button>
+                <div class="stops" role="group" aria-label="Exposition format">
+                  <button class="stop" type="button" data-format="text" aria-pressed="true">
+                    0.0.4
+                  </button>
+                  <button class="stop" type="button" data-format="openmetrics" aria-pressed="false">
+                    1.0
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="annotations" id="annotations">
+              <div class="annotation" data-for="name">
+                <b>metric</b>the family, plus this step's suffix
+              </div>
+              <div class="annotation" data-for="labels">
+                <b>labels</b>the bound, sorted with the rest
+              </div>
+              <div class="annotation" data-for="value">
+                <b>value</b>cumulative: at or below the bound
+              </div>
+              <div class="annotation" data-for="time">
+                <b>timestamp</b><span id="time-note">milliseconds since the epoch</span>
+              </div>
+            </div>
+            <div class="specimen-foot">
+              <p class="specimen-note marginalia">written by this library, not typed here</p>
+              <p class="marginalia" id="content-type">text/plain; version=0.0.4; charset=utf-8</p>
+            </div>
+          </div>
+
+          <div class="header-note">
+            <div>
+              <p>
+                <b>Two formats, one model.</b> The compatibility format writes
+                milliseconds and stops there. OpenMetrics writes seconds, a
+                <code># UNIT</code> line, exemplars and a closing <code># EOF</code>.
+                Both come out of the same collected families, so a switch between
+                them cannot change a count.
+              </p>
+              <p>
+                The number above is cumulative on purpose. A histogram is not a
+                bucket count but a budget: <code>le="0.1"</code> says how many
+                samples took 100 milliseconds or less, so a reader never has to add
+                steps to answer the question it came with.
+              </p>
+            </div>
+            <aside class="side">
+              <b>What the labels say</b>
+              <p>
+                <code>le</code> is the step's upper bound. Labels are sorted before
+                they are written, so two scrapes of the same series diff cleanly.
+              </p>
+              <p>
+                <code>+Inf</code> is always the last step, and always equal to
+                <code>_count</code>. This window has nothing above 2.5 s.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <footer class="colophon">
+        <p class="end">The window closes.<br /><em><span id="end-line">— samples.</span></em></p>
+        <div class="meta">
+          <span>Apache-2.0</span>
+          <a href="https://github.com/moonbitstack/moonp8s">github.com/moonbitstack/moonp8s</a>
+          <a href="https://mooncakes.io/docs/moonbitstack/moonp8s">mooncakes.io</a>
+          <span>Built by running the library</span>
+          <span id="colophon-count">—</span>
+          <span>Set in Instrument Serif, IBM Plex Mono, Inter Tight</span>
+          <span>moonp8s <span data-version>—</span></span>
+        </div>
+        <div class="end-tick" aria-hidden="true"></div>
+      </footer>
+    </div>
+
+    <script type="module" src="engine/moonp8s.js"></script>
+    <script type="module" src="site.js"></script>
+    <script type="module" src="home.js"></script>
+  </body>
+</html>
