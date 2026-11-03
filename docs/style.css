@@ -2418,6 +2418,74 @@ kbd {
 }
 
 @media (width <= 980px) {
+  /* An inner plate folds to one column: the number, the prose, the aside. */
+  .page-kicker,
+  .page-title,
+  .page-lede,
+  .page-facts {
+    grid-column: 1 / -1;
+  }
+  .page-kicker {
+    padding-bottom: 14px;
+  }
+  .page-lede {
+    margin-top: 18px;
+    padding-bottom: 0;
+  }
+  .page-facts {
+    margin-top: 24px;
+  }
+  .doc-mark {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 10px;
+    padding-top: 0;
+  }
+  .doc-body,
+  .doc-aside {
+    grid-column: 1 / -1;
+  }
+  .doc-aside {
+    margin-top: 26px;
+  }
+  .doc-toc {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+  .api-contents {
+    grid-column: 1 / -1;
+    position: static;
+    display: block;
+    padding-bottom: 18px;
+  }
+  .api-toc {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 22px;
+  }
+  .api-toc a {
+    gap: 6px;
+  }
+  .api-hint {
+    display: none;
+  }
+  .api-packages {
+    grid-column: 1 / -1;
+  }
+  .api-package-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .api-package-head .plate-no,
+  .api-package-head h2,
+  .api-package-head code,
+  .api-package-head p {
+    grid-column: 1 / -1;
+  }
+  .api-package-head code {
+    text-align: left;
+  }
   .seams {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2496,6 +2564,16 @@ kbd {
     gap: 10px;
     padding-top: 9px;
     border-top: 1px solid var(--rule);
+  }
+  .nav {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .doc-toc {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .foot {
+    padding-right: 0;
   }
   .field {
     grid-template-columns: 44px minmax(0, 1fr) 70px;

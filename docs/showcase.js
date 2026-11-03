@@ -135,7 +135,7 @@ let binning = 1;
 
 function spell(bound) {
   if (bound >= 1) return bound.toFixed(1);
-  if (bound >= 0.01) return bound.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  if (bound >= 0.001) return bound.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
   return bound.toExponential(1);
 }
 

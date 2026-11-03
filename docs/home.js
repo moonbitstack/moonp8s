@@ -317,7 +317,7 @@ let binning = Math.min(1, (plate?.binnings?.length ?? 1) - 1);
 function spellBound(bound) {
   if (bound >= 100) return bound.toFixed(0);
   if (bound >= 1) return bound.toFixed(1);
-  if (bound >= 0.01) return bound.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  if (bound >= 0.001) return bound.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
   return bound.toExponential(1);
 }
 
@@ -344,7 +344,8 @@ function drawAggregation() {
   const x = (i) => (i / n) * w;
   const y = (count) => bottom - (count / total) * (bottom - top);
 
-  // the beat: one rule per quarter of the window's count
+  // the beat: one rule per quarter of the window's count, and the count at each
+  // rule — a staircase without a scale is a drawing, not a measurement
   for (let k = 0; k <= 4; k += 1) {
     const yy = y((total / 4) * k);
     svg.append(make("line", {
@@ -352,6 +353,12 @@ function drawAggregation() {
       stroke: k === 0 ? "var(--rule-strong)" : "var(--grid)",
       "stroke-width": 1,
     }));
+    if (k > 0) {
+      const mark = make("text", { x: w - 4, y: yy - 4, "text-anchor": "end", fill: "var(--ink-faint)" });
+      mark.setAttribute("style", "font-family:var(--mono);font-size:8px;letter-spacing:.02em");
+      mark.textContent = thousands(Math.round((total / 4) * k));
+      svg.append(mark);
+    }
   }
 
   // the staircase: a tread per bucket, a rise per count
@@ -371,9 +378,10 @@ function drawAggregation() {
   }
 
   // the edges, written under the step they close
-  const every = Math.ceil(n / 12);
+  const every = n <= 14 ? 1 : Math.ceil(n / 12);
   chosen.bounds.forEach((bound, i) => {
-    if (i % every !== 0) return;
+    // the budget edge is always named, even when the stride would skip it
+    if (i % every !== 0 && bound !== (plate.budget ?? 0.1)) return;
     const label = make("text", {
       x: Math.min(w - 2, x(i + 1)),
       y: h - 6,
