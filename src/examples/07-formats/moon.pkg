@@ -1,0 +1,6 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+}
