@@ -271,3 +271,39 @@ test "a gauge can take its value from a function" {
   gauge.inc(by=2.0)
   assert_true(gauge.get() == 4.0)
 }
+
+///|
+test "a scrape stamps the samples that carry no time of their own" {
+  let registry = @metric.Registry::new() catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  let gauge = @metric.Gauge::new()
+  let histogram = @metric.Histogram::new() catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  registry.register("g", "G.", gauge) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  registry.register("h", "H.", histogram) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  gauge.set(2.0)
+  histogram.observe(0.02)
+  let stamped = registry.collect(at=1700000000.0)
+  for family in stamped {
+    for point in family.metrics {
+      match point.timestamp {
+        Some(at) => assert_true(at == 1700000000.0)
+        None => abort("a scrape left a sample unstamped")
+      }
+    }
+  }
+  // A point that already knows its time keeps it: a backfilled sample is not the
+  // scrape's to date.
+  gauge.set(3.0, timestamp=1699999999.0)
+  let backfilled = registry.collect(at=1700000000.0)
+  match backfilled[0].metrics[0].timestamp {
+    Some(at) => assert_true(at == 1699999999.0)
+    None => abort("a dated sample lost its date")
+  }
+}

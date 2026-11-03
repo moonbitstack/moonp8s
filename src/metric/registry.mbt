@@ -181,12 +181,24 @@ pub fn Registry::add(self : Registry, collector : &Collector) -> Unit {
 }
 
 ///|
-fn Registry::gather(self : Registry) -> Array[MetricFamily] {
+fn stamp(point : Point, at : Double?) -> Point {
+  match point.timestamp {
+    Some(_) => point
+    None =>
+      match at {
+        Some(when) => { ..point, timestamp: Some(when), }
+        None => point
+      }
+  }
+}
+
+///|
+fn Registry::gather(self : Registry, at : Double?) -> Array[MetricFamily] {
   let out : Array[MetricFamily] = []
   for entry in self.entries {
     let labelled = entry.metric
       .points()
-      .map(fn(p) { { ..p, labels: self.labels + p.labels, } })
+      .map(fn(p) { stamp({ ..p, labels: self.labels + p.labels, }, at) })
     out.push({
       name: entry.name,
       kind: entry.metric.kind(),
@@ -198,7 +210,7 @@ fn Registry::gather(self : Registry) -> Array[MetricFamily] {
   for collector in self.collectors {
     for family in collector.collect() {
       let labelled = family.metrics.map(fn(p) {
-        { ..p, labels: self.labels + p.labels, }
+        stamp({ ..p, labels: self.labels + p.labels, }, at)
       })
       out.push({
         ..family,
@@ -213,6 +225,11 @@ fn Registry::gather(self : Registry) -> Array[MetricFamily] {
 ///|
 /// The snapshot of everything registered: one family per registered metric or
 /// collector family, in registration order.
-pub fn Registry::collect(self : Registry) -> Array[MetricFamily] {
-  self.gather()
+///
+/// `at` is the moment of the scrape. Every sample that does not already carry a
+/// timestamp is stamped with it, which is what a real scrape does: the exporter does
+/// not know when it will be read. A sample that was given a timestamp keeps it — a
+/// backfilled point is not the scrape's.
+pub fn Registry::collect(self : Registry, at? : Double) -> Array[MetricFamily] {
+  self.gather(at)
 }

@@ -167,7 +167,7 @@ pub struct Registry {
   // private fields
 }
 pub fn Registry::add(Self, &Collector) -> Unit
-pub fn Registry::collect(Self) -> Array[MetricFamily]
+pub fn Registry::collect(Self, at? : Double) -> Array[MetricFamily]
 pub fn Registry::counter(Self, String, String, unit? : String) -> Counter raise Refused
 pub fn Registry::gauge(Self, String, String, unit? : String) -> Gauge raise Refused
 pub fn Registry::histogram(Self, String, String, buckets? : Array[Double], unit? : String) -> Histogram raise Refused
