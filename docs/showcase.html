@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Showcase — moonp8s</title>
+    <meta
+      name="description"
+      content="Paste an exposition and read it back with this library's parser, or move the bucket edges and watch the median move while the count does not."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0a08'/%3E%3Cpath d='M3 3.5h10M3 8h10M3 12.5h10' stroke='%23f2ebe0' stroke-opacity='.3'/%3E%3Cpath d='M6 2v12' stroke='%23e9a05c'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="theme.js"></script>
+    <script src="version.js"></script>
+  </head>
+  <body data-ruler="page">
+    <a class="skip" href="#main">Skip to the text</a>
+
+    <div
+      class="ruler"
+      id="ruler"
+      role="scrollbar"
+      aria-controls="main"
+      aria-orientation="vertical"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="Position in the sheet"
+      tabindex="0"
+    >
+      <div class="ruler-thumb" id="ruler-thumb"></div>
+    </div>
+    <div class="ruler-readout" aria-hidden="true">
+      <span id="readout-window">plate 01 / 02</span>
+      <b id="readout-line">0%</b>
+    </div>
+
+    <div class="sheet" id="main">
+      <header class="topline">
+        <span class="brand">
+          <a class="wordmark" href="./">moonp8s</a>
+          <span class="marginalia wide-only">Showcase · two instruments</span>
+          <span class="marginalia narrow-only">Showcase</span>
+        </span>
+        <nav class="nav" aria-label="Sections">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html" aria-current="page">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <span class="toplinks">
+          <a class="toplink" href="https://github.com/moonbitstack/moonp8s">GitHub</a>
+          <button class="theme" id="theme" type="button" aria-label="Switch plate">
+            paper
+          </button>
+        </span>
+      </header>
+
+      <main>
+        <section class="page-head">
+          <span class="marginalia page-kicker">Showcase</span>
+          <h1 class="page-title">Read it back.<br /><em>Move the edges.</em></h1>
+          <p class="page-lede">
+            Two instruments, both driven by the library compiled to this page. The
+            first parses whatever exposition you paste. The second cuts the same
+            window three ways and prints the median each one answers with.
+          </p>
+          <dl class="page-facts">
+            <div><dt>Parser</dt><dd>expo.parse</dd></div>
+            <div><dt>Window</dt><dd><b id="lab-window">—</b> samples</dd></div>
+            <div><dt>Input</dt><dd>either text format</dd></div>
+          </dl>
+        </section>
+
+        <section class="lab" id="parse" data-ruler-section="the parser">
+          <div class="lab-input">
+            <label class="lab-label" for="expo-input">An exposition <span>· paste, or start from a preset</span></label>
+            <textarea id="expo-input" spellcheck="false" autocomplete="off" aria-describedby="lab-status"></textarea>
+            <div class="presets">
+              <button class="preset" type="button" data-preset="window">this window</button>
+              <button class="preset" type="button" data-preset="openmetrics">1.0, with # EOF</button>
+              <button class="preset" type="button" data-preset="broken">a line that refuses</button>
+              <button class="preset" type="button" data-preset="labels">a counter with labels</button>
+            </div>
+            <button class="lab-send" type="button" id="lab-send">
+              read it <span>→</span>
+            </button>
+          </div>
+          <div class="lab-read">
+            <span class="lab-label">What the parser made of it</span>
+            <div class="lab-status" id="lab-status" role="status" aria-live="polite">—</div>
+            <div id="lab-out"></div>
+          </div>
+        </section>
+
+        <section class="lab" id="edges" data-ruler-section="the edges">
+          <div class="lab-input">
+            <span class="lab-label">The same 1,027 samples, three sets of edges</span>
+            <p class="lab-note">
+              A histogram cannot answer with a number it was not given. Widen the
+              steps and the median coarsens; narrow them and it sharpens, at the cost
+              of more series on the wire. What never moves is the count.
+            </p>
+            <div class="stops" role="group" aria-label="Bucket layout">
+              <button class="stop" type="button" data-binning="0" aria-pressed="false">4 steps</button>
+              <button class="stop" type="button" data-binning="1" aria-pressed="true">14 steps</button>
+              <button class="stop" type="button" data-binning="2" aria-pressed="false">20 steps</button>
+            </div>
+          </div>
+          <div class="lab-read">
+            <span class="lab-label">What each layout answers</span>
+            <dl class="agg-read" id="lab-read-out">
+              <div><dt>samples</dt><dd id="lab-n">—</dd></div>
+              <div><dt>edges</dt><dd id="lab-edges">—</dd></div>
+              <div><dt>median</dt><dd id="lab-median">—</dd></div>
+              <div><dt>p90</dt><dd id="lab-p90">—</dd></div>
+            </dl>
+            <p class="marginalia" id="lab-hint">the count is the same in all three</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <span>moonp8s <span data-version>—</span> · Apache-2.0</span>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <a href="https://github.com/moonbitstack/moonp8s">source</a>
+        <a href="https://mooncakes.io/docs/moonbitstack/moonp8s">mooncakes</a>
+      </footer>
+    </div>
+
+    <script type="module" src="engine/moonp8s.js"></script>
+    <script type="module" src="site.js"></script>
+    <script type="module" src="showcase.js"></script>
+  </body>
+</html>

@@ -6,6 +6,9 @@ handler. It is a data model and a format implementation, not a server: it never
 opens a socket and never reads a clock, so a scrape and a push stay something
 the caller schedules.
 
+The site is at **https://moonbitstack.github.io/moonp8s/** — a guide, the
+generated reference, a parser to try, and four runnable examples.
+
 ## Install
 
 ```bash

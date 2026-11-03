@@ -53,7 +53,13 @@ function populations(plate) {
 const plate = data ?? null;
 const rows = plate ? rowsOf(plate) : [];
 const pops = plate ? populations(plate) : [];
-const rowTotals = rows.map((_, r) => pops.reduce((sum, second) => sum + second[r], 0));
+// Rows run slowest-first, buckets run fastest-first: the last row is the first
+// bucket, and the +Inf row holds whatever is above the last bound.
+const bucketOf = (row) => (row === 0 ? -1 : rows.length - 1 - row);
+const rowTotals = rows.map((_, r) => {
+  const b = bucketOf(r);
+  return b < 0 ? 0 : pops.reduce((sum, second) => sum + second[b], 0);
+});
 const maxRow = Math.max(1, ...rowTotals);
 const budgetRow = rows.findIndex((row) => row.bound === (plate?.budget ?? 0.1));
 
@@ -86,7 +92,8 @@ function buildField() {
       cell.className = "cell";
       cell.dataset.second = String(s);
       cell.dataset.row = String(r);
-      const n = pops[s]?.[r] ?? 0;
+      const b = bucketOf(r);
+      const n = b < 0 ? 0 : (pops[s]?.[b] ?? 0);
       cell.dataset.samples = String(n);
       const over = rows[r].bound !== null && rows[r].bound > plate.budget;
       for (let k = 0; k < n; k += 1) {
@@ -193,47 +200,56 @@ function buildSpecimen() {
   node.dataset.copyText = specimen.line;
 
   $("#time-note").textContent =
-    format === "text" ? "milliseconds since the epoch" : "seconds, as a float";
+    format === "text" ? "milliseconds in 0.0.4" : "seconds in 1.0";
   $("#content-type").textContent =
     format === "text"
       ? "text/plain; version=0.0.4; charset=utf-8"
       : "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
+  // The notes are measured, so they are measured again once the real face has
+  // arrived: a fallback face is narrower, and the notes would keep its widths.
   placeAnnotations();
+  if (document.fonts?.ready) document.fonts.ready.then(placeAnnotations);
 }
 
 // The notes hang under the field they name: measuring the fields after the text is
-// set is the only way they stay aligned. Two notes that would collide are stacked on
-// two levels, the way a drawing labels a narrow part, and each gets a rule of its own
+// set is the only way they stay aligned. Notes are packed into lanes — the first
+// lane whose last note has ended before this one starts — so three notes over a
+// narrow specimen stack instead of overprinting, and each gets a rule of its own
 // reaching up to the specimen.
 function placeAnnotations() {
   const specimen = $("#specimen");
   const host = $("#annotations");
   if (!specimen || !host) return;
   for (const tick of host.querySelectorAll(".tick")) tick.remove();
-  const notes = [...host.querySelectorAll(".annotation")];
+  if (innerWidth <= 760) {
+    for (const note of host.querySelectorAll(".annotation")) note.style.top = "";
+    return;
+  }
+  const lanes = [];
   const ticks = [];
-  let previousRight = -Infinity;
-  let level = 0;
-  for (const note of notes) {
+  for (const note of host.querySelectorAll(".annotation")) {
     const field = specimen.querySelector(`[data-field="${note.dataset.for}"]`);
     if (!field) continue;
-    note.style.left = `${field.offsetLeft}px`;
-    if (field.offsetLeft < previousRight + 12) level = level === 0 ? 1 : 0;
-    else level = 0;
-    note.classList.toggle("is-lifted", level === 1);
+    const left = field.offsetLeft;
+    let lane = lanes.findIndex((right) => left >= right + 14);
+    if (lane < 0) {
+      lane = lanes.length;
+      lanes.push(0);
+    }
+    lanes[lane] = left + Math.max(44, note.offsetWidth);
+    note.style.left = `${left}px`;
+    note.style.top = `${lane * 46}px`;
+    // A note on the first lane hangs from the specimen; a lifted one carries a short
+    // mark above itself instead, so the rule never crosses the note it passed.
     const tick = document.createElement("span");
     tick.className = "tick";
-    tick.style.left = `${field.offsetLeft}px`;
-    tick.style.height = level === 1 ? "46px" : "8px";
+    tick.style.left = `${left}px`;
+    tick.style.top = `${lane ? lane * 46 - 14 : 0}px`;
+    tick.style.height = `${lane ? 10 : 8}px`;
     ticks.push(tick);
-    previousRight = field.offsetLeft + Math.max(40, note.offsetWidth);
   }
   for (const tick of ticks) host.append(tick);
-
-  // On a narrow sheet the notes become a list and carry their own names; the rules
-  // would point nowhere, so they are left out.
-  if (innerWidth <= 760) for (const tick of ticks) tick.remove();
 }
 
 /* ------------------------------------------------------------ the facts */
@@ -241,7 +257,7 @@ function placeAnnotations() {
 function fillFacts() {
   if (!plate) return;
   $("#fact-samples").textContent = thousands(plate.total);
-  $("#fact-plate").textContent = plate.window.toFixed(3);
+  $("#fact-window").textContent = plate.window.toFixed(3);
   $("#fact-rate").textContent = plate.rate.toFixed(1);
   $("#fact-over").textContent = thousands(plate.over);
   $("#fact-p90").textContent = plate.p90.toFixed(3);
@@ -290,6 +306,109 @@ for (const stop of $$(".stop[data-format]")) {
   });
 }
 
+
+/* ------------------------------------------------------------ the aggregation */
+
+// One window, three sets of edges. Every staircase here is a snapshot the library
+// produced: the page picks which one to draw, and prints the median that snapshot
+// answers with.
+let binning = Math.min(1, (plate?.binnings?.length ?? 1) - 1);
+
+function spellBound(bound) {
+  if (bound >= 100) return bound.toFixed(0);
+  if (bound >= 1) return bound.toFixed(1);
+  if (bound >= 0.01) return bound.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  return bound.toExponential(1);
+}
+
+function drawAggregation() {
+  const host = $(".agg-plot");
+  const svg = $("#agg-svg");
+  if (!host || !svg || !plate?.binnings?.length) return;
+  const chosen = plate.binnings[binning];
+  const w = host.clientWidth;
+  const h = host.clientHeight || 300;
+  if (!w) return;
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.replaceChildren();
+  const ns = "http://www.w3.org/2000/svg";
+  const make = (name, attrs) => {
+    const node = document.createElementNS(ns, name);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  };
+  const top = 12;
+  const bottom = h - 22;
+  const total = chosen.width || 1;
+  const n = chosen.bounds.length;
+  const x = (i) => (i / n) * w;
+  const y = (count) => bottom - (count / total) * (bottom - top);
+
+  // the beat: one rule per quarter of the window's count
+  for (let k = 0; k <= 4; k += 1) {
+    const yy = y((total / 4) * k);
+    svg.append(make("line", {
+      x1: 0, y1: yy, x2: w, y2: yy,
+      stroke: k === 0 ? "var(--rule-strong)" : "var(--grid)",
+      "stroke-width": 1,
+    }));
+  }
+
+  // the staircase: a tread per bucket, a rise per count
+  let d = `M 0 ${bottom}`;
+  chosen.cum.forEach((count, i) => {
+    d += ` L ${x(i)} ${y(count)} L ${x(i + 1)} ${y(count)}`;
+  });
+  svg.append(make("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 1.2 }));
+
+  // the budget, at the first edge at or above it
+  const at = chosen.bounds.findIndex((bound) => bound >= (plate.budget ?? 0.1));
+  if (at >= 0) {
+    svg.append(make("line", {
+      x1: x(at), y1: top, x2: x(at), y2: bottom,
+      stroke: "var(--accent-dim)", "stroke-width": 1,
+    }));
+  }
+
+  // the edges, written under the step they close
+  const every = Math.ceil(n / 12);
+  chosen.bounds.forEach((bound, i) => {
+    if (i % every !== 0) return;
+    const label = make("text", {
+      x: Math.min(w - 2, x(i + 1)),
+      y: h - 6,
+      "text-anchor": "end",
+      fill: bound === (plate.budget ?? 0.1) ? "var(--accent)" : "var(--ink-faint)",
+    });
+    label.setAttribute("style", "font-family:var(--mono);font-size:8px;letter-spacing:.02em");
+    label.textContent = spellBound(bound);
+    svg.append(label);
+  });
+
+  const defaultMedian = plate.binnings[1]?.median ?? chosen.median;
+  $("#agg-n").textContent = thousands(chosen.width);
+  $("#agg-sum").textContent = `${plate.sum.toFixed(3)} s`;
+  $("#agg-median").textContent = `${spellBound(chosen.median)} s`;
+  $("#agg-p90").textContent = `${spellBound(chosen.p90)} s`;
+  $("#agg-median").classList.toggle("is-moved", Math.abs(chosen.median - defaultMedian) > 1e-9);
+  $("#agg-hint").textContent =
+    binning === 1
+      ? "the edges the official clients share"
+      : `${n} edges · ${thousands(chosen.width)} samples · same sum`;
+}
+
+for (const stop of $$(".stop[data-binning]")) {
+  stop.addEventListener("click", () => {
+    const next = Number(stop.dataset.binning);
+    if (next === binning) return;
+    binning = next;
+    for (const other of $$(".stop[data-binning]")) {
+      other.setAttribute("aria-pressed", String(Number(other.dataset.binning) === binning));
+    }
+    drawAggregation();
+  });
+}
+
 /* ------------------------------------------------------------ start */
 
 if (plate && !plate.error) {
@@ -297,6 +416,7 @@ if (plate && !plate.error) {
   buildReadout();
   buildSpecimen();
   fillFacts();
+  drawAggregation();
   enter();
 } else {
   document.body.dataset.engine = "missing";
@@ -313,5 +433,6 @@ addEventListener("resize", () => {
     const scan = $("#scan");
     if (scan) scan.style.setProperty("--sweep", `${$("#cells").clientWidth}px`);
     placeAnnotations();
+    drawAggregation();
   });
 });

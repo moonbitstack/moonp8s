@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guide — moonp8s</title>
+    <meta
+      name="description"
+      content="From an empty registry to a scrape: the first metric, labels, a histogram, the two text formats, the handler, rate, and the limits of the model."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0a08'/%3E%3Cpath d='M3 3.5h10M3 8h10M3 12.5h10' stroke='%23f2ebe0' stroke-opacity='.3'/%3E%3Cpath d='M6 2v12' stroke='%23e9a05c'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="theme.js"></script>
+    <script src="version.js"></script>
+  </head>
+  <body data-ruler="page">
+    <a class="skip" href="#main">Skip to the text</a>
+
+    <div
+      class="ruler"
+      id="ruler"
+      role="scrollbar"
+      aria-controls="main"
+      aria-orientation="vertical"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="Position in the sheet"
+      tabindex="0"
+    >
+      <div class="ruler-thumb" id="ruler-thumb"></div>
+    </div>
+    <div class="ruler-readout" aria-hidden="true">
+      <span id="readout-window">plate 01 / 09</span>
+      <b id="readout-line">0%</b>
+    </div>
+
+    <div class="sheet" id="main">
+      <header class="topline">
+        <span class="brand">
+          <a class="wordmark" href="./">moonp8s</a>
+          <span class="marginalia wide-only">Guide · install to scrape</span>
+          <span class="marginalia narrow-only">Guide</span>
+        </span>
+        <nav class="nav" aria-label="Sections">
+          <a href="./">Home</a>
+          <a href="guide.html" aria-current="page">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <span class="toplinks">
+          <a class="toplink" href="https://github.com/moonbitstack/moonp8s">GitHub</a>
+          <button class="theme" id="theme" type="button" aria-label="Switch plate">
+            paper
+          </button>
+        </span>
+      </header>
+
+      <main>
+        <section class="page-head">
+          <span class="marginalia page-kicker">Guide</span>
+          <h1 class="page-title">From nothing<br />to <em>a scrape.</em></h1>
+          <p class="page-lede">
+            Nine steps, in the order a service needs them. Every fragment below is
+            the real signature; every output is what this library wrote when the
+            code was run.
+          </p>
+          <dl class="page-facts">
+            <div><dt>Steps</dt><dd>nine</dd></div>
+            <div><dt>Packages</dt><dd>metric · expo · push · asgi</dd></div>
+            <div><dt>Clock</dt><dd>handed in</dd></div>
+          </dl>
+        </section>
+
+        <nav class="doc-toc" aria-label="Steps">
+          <a href="#install"><span>01</span>install</a>
+          <a href="#first"><span>02</span>the first metric</a>
+          <a href="#labels"><span>03</span>labels</a>
+          <a href="#histogram"><span>04</span>a histogram</a>
+          <a href="#exposition"><span>05</span>the exposition</a>
+          <a href="#scrape"><span>06</span>the scrape</a>
+          <a href="#rate"><span>07</span>rate</a>
+          <a href="#limits"><span>08</span>limits</a>
+          <a href="#not-here"><span>09</span>not here</a>
+        </nav>
+
+        <section class="doc-section" id="install" data-ruler-section="install">
+          <div class="doc-mark"><span class="plate-no">01</span></div>
+          <div class="doc-body">
+            <h2>Install.</h2>
+            <p>
+              One line. The module has no dependency at runtime except the standard
+              library; <code>moonasgi</code> is used only by the <code>asgi</code>
+              package, and only if you import it.
+            </p>
+            <!-- nocheck: a command, not a program -->
+            <pre><code>moon add moonbitstack/moonp8s</code></pre>
+            <p>
+              Import the package that owns the type you construct. The root package
+              re-exports the common names, but a re-exported type arrives without its
+              constructors — <code>@moonp8s.Registry</code> is visible from the
+              facade, <code>Registry::new</code> is not.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Why a facade at all</b>
+            <p>
+              So one import reaches the five packages for reading code, while writing
+              code still names the package it depends on.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="first" data-ruler-section="first metric">
+          <div class="doc-mark"><span class="plate-no">02</span></div>
+          <div class="doc-body">
+            <h2>A registry and a gauge.</h2>
+            <p>
+              A registry is the thing a scrape reads. Everything registered with it is
+              collected in registration order, which is why the output below has the
+              same shape as the code.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new()
+<span class="k">let</span> running = registry.<span class="a">gauge</span>(
+  <span class="s">"jobs_running"</span>, <span class="s">"Jobs running now."</span>,
+)
+running.<span class="a">set</span>(3.0)
+<span class="k">let</span> families = registry.<span class="a">collect</span>()</code></pre>
+            <p class="output-label">output · the compatibility format</p>
+            <div class="output"># HELP jobs_running Jobs running now.
+# TYPE jobs_running gauge
+jobs_running 3.0</div>
+            <p>
+              There is no timestamp until the caller gives one. A scrape stamps the
+              samples it serves — see <a href="#scrape">step six</a> — but a fixture
+              collected without a time stays without one.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>The three constructors</b>
+            <p>
+              <code>registry.gauge</code>, <code>registry.counter</code> and
+              <code>registry.histogram</code> create and register in one call. Use
+              <code>registry.register</code> when the metric already exists.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="labels" data-ruler-section="labels">
+          <div class="doc-mark"><span class="plate-no">03</span></div>
+          <div class="doc-body">
+            <h2>One metric, many series.</h2>
+            <p>
+              A <code>Family</code> is a metric with a fixed list of label names and
+              one child per label set. The factory is called once per new set, and it
+              may refuse: a constructor that validates its arguments cannot be called
+              from a function that cannot.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> by_queue = <span class="a">@metric.Family</span>::new(
+  [<span class="s">"queue"</span>],
+  <span class="k">fn</span>() <span class="k">raise</span> <span class="a">@metric.Refused</span> {
+    <span class="a">@metric.Gauge</span>::new()
+  },
+)
+registry.<span class="a">register</span>(<span class="s">"jobs_running"</span>, <span class="s">"Jobs running now."</span>, by_queue)
+by_queue.<span class="a">labels</span>([<span class="s">"email"</span>]).<span class="a">set</span>(2.0)
+by_queue.<span class="a">labels</span>([<span class="s">"billing"</span>]).<span class="a">set</span>(1.0)</code></pre>
+            <p class="output-label">output</p>
+            <div class="output">jobs_running{queue="email"} 2.0
+jobs_running{queue="billing"} 1.0</div>
+            <p>
+              Labels are written sorted by name, not in the order they were passed.
+              That is what makes two scrapes of the same series compare with a plain
+              <code>diff</code>.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>The cardinality is yours</b>
+            <p>
+              A label value is a new series for the life of the process. A user id in
+              a label is a leak with a schedule.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="histogram" data-ruler-section="histogram">
+          <div class="doc-mark"><span class="plate-no">04</span></div>
+          <div class="doc-body">
+            <h2>A histogram, and its edges.</h2>
+            <p>
+              <code>Histogram::new()</code> takes the fourteen bounds the official
+              clients share. Pass your own when you know what the service is for —
+              the edges are the answer, so they should be chosen, not inherited.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> latency = registry.<span class="a">histogram</span>(
+  <span class="s">"request_duration_seconds"</span>,
+  <span class="s">"Request latency."</span>,
+)
+latency.<span class="a">observe</span>(0.041)
+latency.<span class="a">observe</span>(0.317)
+
+<span class="c">// or name the edges: bounds must be finite and increasing</span>
+<span class="k">let</span> wide = <span class="a">@metric.Histogram</span>::new(buckets=[0.1, 0.5, 2.0])
+<span class="k">let</span> log = <span class="a">@metric.Histogram</span>::new(
+  buckets=<span class="a">@metric.exponential</span>(0.004, 1.4, 20),
+)</code></pre>
+            <p>
+              An observation that lands above the last bound is counted in
+              <code>+Inf</code>, never dropped. A histogram therefore always adds up
+              to its own <code>_count</code>, which is the property a summary does not
+              have.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Bounds, not buckets</b>
+            <p>
+              <code>buckets</code> are upper bounds. <code>le="0.1"</code> means
+              “0.1 seconds or less”, so the very first bucket is not “0”.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="exposition" data-ruler-section="exposition">
+          <div class="doc-mark"><span class="plate-no">05</span></div>
+          <div class="doc-body">
+            <h2>Two formats, one snapshot.</h2>
+            <p>
+              Collecting gives an array of families; writing it gives text. The same
+              array can leave as the compatibility format or as OpenMetrics, and the
+              counts cannot disagree because they are the same objects.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> families = registry.<span class="a">collect</span>(at=1_700_000_015.0)
+<span class="k">let</span> text = <span class="a">@expo.text</span>(families)
+<span class="k">let</span> om = <span class="a">@expo.openmetrics</span>(families)</code></pre>
+            <p class="output-label">output · the histogram's last three lines, both formats</p>
+            <div class="output"># 0.0.4
+request_duration_seconds_bucket{le="+Inf"} 2.0 1700000015000
+request_duration_seconds_count 2.0 1700000015000
+request_duration_seconds_sum 0.358 1700000015000
+
+# 1.0
+request_duration_seconds_bucket{le="+Inf"} 2.0 1.700000015e+09
+request_duration_seconds_count 2.0 1.700000015e+09
+request_duration_seconds_sum 0.358 1.700000015e+09
+# EOF</div>
+            <p>
+              The difference is the timestamp: milliseconds in 0.0.4, seconds in 1.0.
+              The <code># EOF</code> line is not decoration — a reader uses it to tell
+              a truncated scrape from a complete one.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Reading it back</b>
+            <p>
+              <code>@expo.parse</code> takes either format and returns families again.
+              The <a href="showcase.html">showcase</a> runs it on whatever you paste.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="scrape" data-ruler-section="the scrape">
+          <div class="doc-mark"><span class="plate-no">06</span></div>
+          <div class="doc-body">
+            <h2>The handler.</h2>
+            <p>
+              <code>@asgi.app</code> answers <code>GET /metrics</code> with the text
+              negotiated from the request's <code>Accept</code>, <code>OPTIONS</code>
+              with the methods it allows, and everything else with
+              <code>405</code>. It also answers <code>/favicon.ico</code> with
+              <code>204</code>, because a browser will ask and a log full of 404s is a
+              log with the real 404s buried in it.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> metrics = <span class="a">@asgi.app</span>(registry)
+
+<span class="c">// or behind your own router, with counts for every request:</span>
+<span class="k">let</span> counted = <span class="a">@asgi.middleware</span>(registry)(handler)</code></pre>
+            <p>
+              The middleware needs a clock, and takes one: <code>now</code> is a
+              function returning seconds. Pass the same one the rest of your service
+              uses and the panel and the histogram agree.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Content type</b>
+            <p>
+              <code>Format::content_type</code> prints the header that matches the
+              body: <code>text/plain; version=0.0.4</code> or
+              <code>application/openmetrics-text; version=1.0.0</code>.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="rate" data-ruler-section="rate">
+          <div class="doc-mark"><span class="plate-no">07</span></div>
+          <div class="doc-body">
+            <h2>Rate is arithmetic, not an API.</h2>
+            <p>
+              Nothing in this library computes a rate. A counter is a number that only
+              goes up; the slope is the reader's business, and doing it at the scrape
+              is what makes the result independent of when the panel asks.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> first = requests.<span class="a">get</span>()
+<span class="c">// ... one window later ...</span>
+<span class="k">let</span> per_second = (requests.<span class="a">get</span>() - first) / 15.0</code></pre>
+            <p>
+              The one thing the library does do is refuse a counter that goes down:
+              <code>inc(by=-1.0)</code> raises <code>Refused</code> instead of
+              quietly becoming a gauge. A reset is a reset, and
+              <code>Counter::reset</code> says so, with a new creation time if you
+              give one.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Two scrapes, one window</b>
+            <p>
+              The denominator is the distance between the scrapes, not the scrape
+              interval you configured. They differ exactly when it matters.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="limits" data-ruler-section="limits">
+          <div class="doc-mark"><span class="plate-no">08</span></div>
+          <div class="doc-body">
+            <h2>What it refuses.</h2>
+            <p>
+              Every refusal is one error, <code>Refused</code>, carrying a sentence
+              with the offending name or bound in it. The point is that a mistake
+              surfaces at the call that made it, not in a dashboard three weeks later.
+            </p>
+            <table class="table">
+              <thead>
+                <tr><th>Refused</th><th>Because</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>a name</td><td>must match <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code></td></tr>
+                <tr><td>a label name</td><td>must match <code>[a-zA-Z_][a-zA-Z0-9_]*</code></td></tr>
+                <tr><td>the same name twice</td><td>the registry already spent it</td></tr>
+                <tr><td>a bucket bound</td><td>finite, and strictly increasing</td></tr>
+                <tr><td>a counter step</td><td>cannot be negative</td></tr>
+                <tr><td>an exemplar label</td><td>128 characters, at most</td></tr>
+                <tr><td>a unit</td><td>must be a bare word, not a sentence</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <aside class="doc-aside">
+            <b>One error type</b>
+            <p>
+              <code>Refused(message)</code> and <code>message()</code>. Pattern-match
+              it, print it, or let it propagate — there is nothing else to catch.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="not-here" data-ruler-section="not here">
+          <div class="doc-mark"><span class="plate-no">09</span></div>
+          <div class="doc-body">
+            <h2>What is not here.</h2>
+            <p>
+              Three things a Prometheus client in another language does that this one
+              does not, and one it does differently.
+            </p>
+            <ul>
+              <li>
+                <b>No protobuf.</b> The two text formats are the surface. A binary
+                exposition is a different transport, and it is not promised here.
+              </li>
+              <li>
+                <b>No multiprocess aggregation.</b> One process, one registry. If you
+                need several, aggregate before you observe.
+              </li>
+              <li>
+                <b>No process metrics read for you.</b> <code>ProcessCollector</code>
+                exports the seven series, but the caller supplies the numbers: this
+                library does no I/O, which is what keeps it portable to wasm.
+              </li>
+              <li>
+                <b>No quantiles from a histogram.</b> A histogram answers with an
+                edge. If you need an estimated quantile, use a
+                <code>Summary</code>, which keeps a sketch.
+              </li>
+            </ul>
+            <p>
+              Everything listed here is a decision, not an omission: each one would
+              add a dependency, a clock, or a promise this library does not want to
+              keep on every target.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>Where to go next</b>
+            <p>
+              <a href="examples.html">Examples</a> runs four complete programs.
+              <a href="api.html">The reference</a> lists every public name.
+            </p>
+          </aside>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <span>moonp8s <span data-version>—</span> · Apache-2.0</span>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <a href="https://github.com/moonbitstack/moonp8s">source</a>
+        <a href="https://mooncakes.io/docs/moonbitstack/moonp8s">mooncakes</a>
+      </footer>
+    </div>
+
+    <script type="module" src="site.js"></script>
+  </body>
+</html>

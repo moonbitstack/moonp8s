@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Examples — moonp8s</title>
+    <meta
+      name="description"
+      content="Four complete programs, each with the output this library printed when it ran: a counter, a gauge, a histogram, and one snapshot in both text formats."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0a08'/%3E%3Cpath d='M3 3.5h10M3 8h10M3 12.5h10' stroke='%23f2ebe0' stroke-opacity='.3'/%3E%3Cpath d='M6 2v12' stroke='%23e9a05c'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="theme.js"></script>
+    <script src="version.js"></script>
+  </head>
+  <body data-ruler="page">
+    <a class="skip" href="#main">Skip to the text</a>
+
+    <div
+      class="ruler"
+      id="ruler"
+      role="scrollbar"
+      aria-controls="main"
+      aria-orientation="vertical"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="Position in the sheet"
+      tabindex="0"
+    >
+      <div class="ruler-thumb" id="ruler-thumb"></div>
+    </div>
+    <div class="ruler-readout" aria-hidden="true">
+      <span id="readout-window">plate 01 / 04</span>
+      <b id="readout-line">0%</b>
+    </div>
+
+    <div class="sheet" id="main">
+      <header class="topline">
+        <span class="brand">
+          <a class="wordmark" href="./">moonp8s</a>
+          <span class="marginalia wide-only">Examples · four programs, run</span>
+          <span class="marginalia narrow-only">Examples</span>
+        </span>
+        <nav class="nav" aria-label="Sections">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html" aria-current="page">Examples</a>
+        </nav>
+        <span class="toplinks">
+          <a class="toplink" href="https://github.com/moonbitstack/moonp8s">GitHub</a>
+          <button class="theme" id="theme" type="button" aria-label="Switch plate">
+            paper
+          </button>
+        </span>
+      </header>
+
+      <main>
+        <section class="page-head">
+          <span class="marginalia page-kicker">Examples</span>
+          <h1 class="page-title">Four programs,<br /><em>as they ran.</em></h1>
+          <p class="page-lede">
+            The source on the left is the whole file. The output on the right is what
+            this library printed when that file was run — not a sketch of what it
+            might print.
+          </p>
+          <dl class="page-facts">
+            <div><dt>Programs</dt><dd>four</dd></div>
+            <div><dt>Output</dt><dd>captured, not written</dd></div>
+            <div><dt>Run</dt><dd>moon run src/examples/…</dd></div>
+          </dl>
+        </section>
+
+        <section class="example" id="counter" data-ruler-section="counter">
+          <div class="example-head">
+            <span class="plate-no">01</span>
+            <h2>A counter.</h2>
+            <p class="path">src/examples/04-counter/main.mbt</p>
+            <p class="run">moon run src/examples/04-counter</p>
+          </div>
+          <div class="example-body">
+            <div class="listing">
+              <!-- nocheck: the file as it is -->
+              <pre><code><span class="c">// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0</span>
+
+<span class="c">///|
+/// A counter only goes up, so the only way to read it is to scrape it twice. This
+/// program prints one scrape.</span>
+<span class="k">fn</span> main <span class="k">raise</span> {
+  <span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new()
+  <span class="k">let</span> jobs = registry.<span class="a">counter</span>(<span class="s">"jobs_processed"</span>, <span class="s">"Jobs finished."</span>)
+  jobs.<span class="a">inc</span>()
+  jobs.<span class="a">inc</span>(by=11.0)
+  println(<span class="a">@expo.text</span>(registry.<span class="a">collect</span>()))
+}</code></pre>
+            </div>
+            <div class="example-side">
+              <h3>output</h3>
+              <div class="output"># HELP jobs_processed_total Jobs finished.
+# TYPE jobs_processed_total counter
+jobs_processed_total 12.0</div>
+              <p>
+                The registered name was <code>jobs_processed</code>; the wire name
+                carries <code>_total</code>, because that is what a counter is called
+                in the exposition format.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="example" id="gauge" data-ruler-section="gauge">
+          <div class="example-head">
+            <span class="plate-no">02</span>
+            <h2>A gauge.</h2>
+            <p class="path">src/examples/05-gauge/main.mbt</p>
+            <p class="run">moon run src/examples/05-gauge</p>
+          </div>
+          <div class="example-body">
+            <div class="listing">
+              <!-- nocheck: the file as it is -->
+              <pre><code><span class="c">// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0</span>
+
+<span class="c">///|
+/// A gauge is the number at the moment of the scrape: it can go down, and it can be
+/// taken from a function instead of stored.</span>
+<span class="k">fn</span> main <span class="k">raise</span> {
+  <span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new()
+  <span class="k">let</span> running = registry.<span class="a">gauge</span>(<span class="s">"jobs_running"</span>, <span class="s">"Jobs running now."</span>)
+  running.<span class="a">set</span>(3.0)
+  running.<span class="a">dec</span>()
+  println(<span class="a">@expo.text</span>(registry.<span class="a">collect</span>()))
+}</code></pre>
+            </div>
+            <div class="example-side">
+              <h3>output</h3>
+              <div class="output"># HELP jobs_running Jobs running now.
+# TYPE jobs_running gauge
+jobs_running 2.0</div>
+              <p>
+                One gauge, one line. A gauge is the only kind whose name is written
+                exactly as it was registered — no suffix, no rewrite.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="example" id="histogram" data-ruler-section="histogram">
+          <div class="example-head">
+            <span class="plate-no">03</span>
+            <h2>A histogram.</h2>
+            <p class="path">src/examples/06-histogram/main.mbt</p>
+            <p class="run">moon run src/examples/06-histogram</p>
+          </div>
+          <div class="example-body">
+            <div class="listing">
+              <!-- nocheck: the file as it is -->
+              <pre><code><span class="c">// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0</span>
+
+<span class="c">///|
+/// Two observations, counted into the fourteen bounds the official clients share.
+/// The buckets are cumulative on the wire: `le="0.5"` counts everything at or below
+/// half a second.</span>
+<span class="k">fn</span> main <span class="k">raise</span> {
+  <span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new()
+  <span class="k">let</span> latency = registry.<span class="a">histogram</span>(
+    <span class="s">"request_duration_seconds"</span>,
+    <span class="s">"Request latency."</span>,
+  )
+  latency.<span class="a">observe</span>(0.041)
+  latency.<span class="a">observe</span>(0.317)
+  println(<span class="a">@expo.text</span>(registry.<span class="a">collect</span>()))
+}</code></pre>
+            </div>
+            <div class="example-side">
+              <h3>output</h3>
+              <div class="output"># HELP request_duration_seconds Request latency.
+# TYPE request_duration_seconds histogram
+request_duration_seconds_bucket{le="0.005"} 0.0
+request_duration_seconds_bucket{le="0.01"} 0.0
+request_duration_seconds_bucket{le="0.025"} 0.0
+request_duration_seconds_bucket{le="0.05"} 1.0
+request_duration_seconds_bucket{le="0.075"} 1.0
+request_duration_seconds_bucket{le="0.1"} 1.0
+request_duration_seconds_bucket{le="0.25"} 1.0
+request_duration_seconds_bucket{le="0.5"} 2.0
+request_duration_seconds_bucket{le="0.75"} 2.0
+request_duration_seconds_bucket{le="1.0"} 2.0
+request_duration_seconds_bucket{le="2.5"} 2.0
+request_duration_seconds_bucket{le="5.0"} 2.0
+request_duration_seconds_bucket{le="7.5"} 2.0
+request_duration_seconds_bucket{le="10.0"} 2.0
+request_duration_seconds_bucket{le="+Inf"} 2.0
+request_duration_seconds_count 2.0
+request_duration_seconds_sum 0.358</div>
+              <p>
+                The first observation, 41 ms, crosses the first four steps at once, so
+                the count jumps at <code>le="0.05"</code>. The second, 317 ms, only
+                moves the steps above <code>0.25</code>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="example" id="formats" data-ruler-section="both formats">
+          <div class="example-head">
+            <span class="plate-no">04</span>
+            <h2>Both formats.</h2>
+            <p class="path">src/examples/07-formats/main.mbt</p>
+            <p class="run">moon run src/examples/07-formats</p>
+          </div>
+          <div class="example-body">
+            <div class="listing">
+              <!-- nocheck: the file as it is -->
+              <pre><code><span class="c">// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0</span>
+
+<span class="c">///|
+/// One snapshot, two formats. The counts are the same object; only the spelling of
+/// the timestamp and the ending differ.</span>
+<span class="k">fn</span> main <span class="k">raise</span> {
+  <span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new()
+  <span class="k">let</span> latency = registry.<span class="a">histogram</span>(
+    <span class="s">"request_duration_seconds"</span>,
+    <span class="s">"Request latency."</span>,
+  )
+  latency.<span class="a">observe</span>(0.041)
+  latency.<span class="a">observe</span>(0.317)
+  <span class="k">let</span> families = registry.<span class="a">collect</span>(at=1_700_000_015.0)
+  println(<span class="s">"=== 0.0.4 ==="</span>)
+  println(<span class="a">@expo.text</span>(families))
+  println(<span class="s">"=== 1.0 ==="</span>)
+  println(<span class="a">@expo.openmetrics</span>(families))
+}</code></pre>
+            </div>
+            <div class="example-side">
+              <h3>output · the tail of each, where they differ</h3>
+              <div class="output">=== 0.0.4 ===
+request_duration_seconds_bucket{le="+Inf"} 2.0 1700000015000
+request_duration_seconds_count 2.0 1700000015000
+request_duration_seconds_sum 0.358 1700000015000
+
+=== 1.0 ===
+request_duration_seconds_bucket{le="+Inf"} 2.0 1.700000015e+09
+request_duration_seconds_count 2.0 1.700000015e+09
+request_duration_seconds_sum 0.358 1.700000015e+09
+# EOF</div>
+              <p>
+                Same three numbers, twice. The first format counts in milliseconds and
+                says nothing at the end; the second counts in seconds and closes with
+                <code># EOF</code>, which is how a reader knows the body is whole.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <span>moonp8s <span data-version>—</span> · Apache-2.0</span>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <a href="https://github.com/moonbitstack/moonp8s">source</a>
+        <a href="https://mooncakes.io/docs/moonbitstack/moonp8s">mooncakes</a>
+      </footer>
+    </div>
+
+    <script type="module" src="site.js"></script>
+  </body>
+</html>

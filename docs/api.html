@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API — moonp8s</title>
+    <meta
+      name="description"
+      content="The complete public interface of moonp8s: every type, function, trait, error and derived method in metric, expo, push, asgi and compat."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230c0a08'/%3E%3Cpath d='M3 3.5h10M3 8h10M3 12.5h10' stroke='%23f2ebe0' stroke-opacity='.3'/%3E%3Cpath d='M6 2v12' stroke='%23e9a05c'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="theme.js"></script>
+    <script src="version.js"></script>
+  </head>
+  <body data-ruler="page">
+    <a class="skip" href="#main">Skip to the text</a>
+
+    <div
+      class="ruler"
+      id="ruler"
+      role="scrollbar"
+      aria-controls="main"
+      aria-orientation="vertical"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="Position in the sheet"
+      tabindex="0"
+    >
+      <div class="ruler-thumb" id="ruler-thumb"></div>
+    </div>
+    <div class="ruler-readout" aria-hidden="true">
+      <span id="readout-window">plate 01 / 05</span>
+      <b id="readout-line">0%</b>
+    </div>
+
+    <div class="sheet" id="main">
+      <header class="topline">
+        <span class="brand">
+          <a class="wordmark" href="./">moonp8s</a>
+          <span class="marginalia wide-only">Reference · every public name</span>
+          <span class="marginalia narrow-only">Reference</span>
+        </span>
+        <nav class="nav" aria-label="Sections">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html" aria-current="page">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <span class="toplinks">
+          <a class="toplink" href="https://github.com/moonbitstack/moonp8s">GitHub</a>
+          <button class="theme" id="theme" type="button" aria-label="Switch plate">
+            paper
+          </button>
+        </span>
+      </header>
+
+      <main>
+        <section class="page-head api-head">
+          <span class="marginalia page-kicker">Reference</span>
+          <h1 class="page-title">Every public <em>name</em>.</h1>
+          <p class="page-lede">
+            Generated from the interfaces MoonBit prints for this module, so nothing
+            public is missing and no signature was typed twice. The prose is the
+            documentation comment beside the code.
+          </p>
+          <dl class="page-facts">
+            <div><dt>Packages</dt><dd>five, and a facade</dd></div>
+            <div><dt>Entries</dt><dd><b id="api-count">—</b> entries</dd></div>
+            <div><dt>Source</dt><dd>pkg.generated.mbti</dd></div>
+          </dl>
+        </section>
+
+        <div class="api-layout">
+          <aside class="api-contents">
+            <div class="api-filter-wrap">
+              <label for="api-filter">Filter names</label>
+              <input
+                id="api-filter"
+                type="search"
+                placeholder="collect, observe, negotiate…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="api-count"><b id="api-count-shown">—</b> shown</span>
+            </div>
+            <nav class="api-toc" aria-label="Packages">
+              <a href="#metric">metric <span data-count-for="metric">—</span></a>
+              <a href="#expo">expo <span data-count-for="expo">—</span></a>
+              <a href="#push">push <span data-count-for="push">—</span></a>
+              <a href="#asgi">asgi <span data-count-for="asgi">—</span></a>
+              <a href="#compat">compat <span data-count-for="compat">—</span></a>
+            </nav>
+            <p class="api-hint">
+              Press <kbd>/</kbd> to filter, <kbd>Esc</kbd> to clear. An anchor in the
+              address bar opens one entry directly. Signatures are printed as
+              <code>moon info</code> writes them: <code>x~</code> has a default,
+              <code>x?</code> may be absent.
+            </p>
+          </aside>
+
+          <div class="api-packages">
+            <section class="api-package" id="metric" data-ruler-section="metric">
+              <header class="api-package-head">
+                <span class="plate-no">01</span>
+                <h2>metric</h2>
+                <code>moonbitstack/moonp8s/metric</code>
+                <p>
+                  The model: kinds, the seven metric types, families, a registry, and
+                  the snapshot an exposition is written from. Nothing here reads a
+                  clock, opens a socket or writes a byte.
+                </p>
+              </header>
+              <!-- BEGIN metric -->
+<!-- Generated by scripts/gen_api.py from pkg.generated.mbti and the documentation comments; do not edit by hand. -->
+<div class="api-group">
+  <h3 class="api-group-title">Values</h3>
+<article class="api-entry" id="metric-buckets" data-name="buckets">
+  <div class="api-line">
+    <span class="api-kind">let</span>
+    <span class="api-call"><code class="api-name">buckets</code><code class="api-sig">: Array[Double]</code></span>
+  </div>
+  <div class="api-doc"><p>The default bucket bounds the official Prometheus clients share: 0.005 through 10, fourteen finite bounds plus the implicit <code>+Inf</code> bucket every histogram has.</p></div>
+</article>
+<article class="api-entry" id="metric-exemplar_label_limit" data-name="exemplar_label_limit">
+  <div class="api-line">
+    <span class="api-kind">let</span>
+    <span class="api-call"><code class="api-name">exemplar_label_limit</code><code class="api-sig">: Int32</code></span>
+  </div>
+  <div class="api-doc"><p>OpenMetrics caps an exemplar's combined label names and values at 128 characters; a longer set makes the exemplar unrepresentable.</p></div>
+</article>
+<article class="api-entry" id="metric-exponential" data-name="exponential">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">exponential</code><code class="api-sig">(Double, Double, Int32) -&gt; Array[Double] raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p><code>count</code> bounds starting at <code>start</code> and multiplying by <code>factor</code>.</p></div>
+</article>
+<article class="api-entry" id="metric-is_valid_label_name" data-name="is_valid_label_name">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">is_valid_label_name</code><code class="api-sig">(String) -&gt; Bool</code></span>
+  </div>
+  <div class="api-doc"><p>Whether <code>name</code> is a label name under the OpenMetrics character rules: <code>[a-zA-Z_][a-zA-Z0-9_]*</code>.</p></div>
+</article>
+<article class="api-entry" id="metric-is_valid_metric_name" data-name="is_valid_metric_name">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">is_valid_metric_name</code><code class="api-sig">(String) -&gt; Bool</code></span>
+  </div>
+  <div class="api-doc"><p>Whether <code>name</code> is a metric name under the OpenMetrics character rules: <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code>.</p></div>
+</article>
+<article class="api-entry" id="metric-is_valid_unit" data-name="is_valid_unit">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">is_valid_unit</code><code class="api-sig">(String) -&gt; Bool</code></span>
+  </div>
+  <div class="api-doc"><p>Whether <code>unit</code> may be appended to a metric name. A unit starts with a letter and continues with letters, digits, or underscores.</p></div>
+</article>
+<article class="api-entry" id="metric-linear" data-name="linear">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">linear</code><code class="api-sig">(Double, Double, Int32) -&gt; Array[Double] raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p><code>count</code> bounds starting at <code>start</code> and growing by <code>width</code>.</p></div>
+</article>
+<article class="api-entry" id="metric-point_of" data-name="point_of">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">point_of</code><code class="api-sig">(Value) -&gt; Point</code></span>
+  </div>
+  <div class="api-doc"><p>A point with no labels and no metadata, the shape a bare metric collects into before its registry or family adds labels.</p></div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Errors</h3>
+<article class="api-entry" id="metric-Refused" data-name="Refused">
+  <div class="api-line">
+    <span class="api-kind">error</span>
+    <span class="api-call"><code class="api-name">Refused</code></span>
+  </div>
+  <div class="api-doc"><p>The one error this library raises: a request it will not honour, with the reason in the message. Messages carry the offending value and, where a position is meaningful, an <code>at</code> offset counted from zero.</p></div>
+  <div class="api-variants">
+    <div class="api-variant">
+      <code>Refused(String)</code>
+      <p></p>
+    </div>
+  </div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Refused-message" data-name="Refused::message">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Refused::message</code><code class="api-sig">(Self) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>The reason a request was refused.</p></div>
+</article>
+  </div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Types and methods</h3>
+<article class="api-entry" id="metric-Counter" data-name="Counter">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Counter</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A monotonically increasing count. <code>inc</code> refuses a negative step because a counter that goes down is a gauge.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Counter-get" data-name="Counter::get">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Counter::get</code><code class="api-sig">(Self) -&gt; Double</code></span>
+  </div>
+  <div class="api-doc"><p>The current count.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Counter-inc" data-name="Counter::inc">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Counter::inc</code><code class="api-sig">(Self, by? : Double, exemplar? : Exemplar) -&gt; Unit raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Increase the counter by <code>by</code>, keeping <code>exemplar</code> as the latest exemplar.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Counter-new" data-name="Counter::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Counter::new</code><code class="api-sig">(created? : Double) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A counter at zero. <code>created</code> records when the series came into existence, for the <code>_created</code> series OpenMetrics exposes.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Counter-reset" data-name="Counter::reset">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Counter::reset</code><code class="api-sig">(Self, created? : Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Restart the counter at zero, optionally dating the reset as a new creation time. Use this when a logical process restarts without restarting the program.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Counter-shard" data-name="Counter::shard">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Counter::shard</code><code class="api-sig">(Self) -&gt; LocalCounter</code></span>
+  </div>
+  <div class="api-doc"><p>A shard of this counter. Many shards may feed one counter; each flushes its own accumulations.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Exemplar" data-name="Exemplar">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Exemplar</code></span>
+  </div>
+  <div class="api-doc"><p>An exemplar ties a sample to the request that produced it: the request's labels, the observed value, and optionally when it was observed (Unix seconds).</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>labels</dt>
+      <dd>Array[(String, String)]</dd>
+    </div>
+    <div>
+      <dt>value</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>timestamp</dt>
+      <dd>Double?</dd>
+    </div>
+  </dl>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Exemplar-new" data-name="Exemplar::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Exemplar::new</code><code class="api-sig">(Array[(String, String)], Double, timestamp? : Double) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Build an exemplar, refusing a label set over the OpenMetrics limit.</p></div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="metric-Gauge" data-name="Gauge">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Gauge</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>An instantaneous value that may go up or down. <code>set</code> takes the timestamp to record, because this library never reads a clock; pass <code>timestamp~</code> when the sample is worth dating.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Gauge-dec" data-name="Gauge::dec">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::dec</code><code class="api-sig">(Self, by? : Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Decrease the gauge by <code>by</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Gauge-get" data-name="Gauge::get">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::get</code><code class="api-sig">(Self) -&gt; Double</code></span>
+  </div>
+  <div class="api-doc"><p>The current value.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Gauge-inc" data-name="Gauge::inc">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::inc</code><code class="api-sig">(Self, by? : Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Increase the gauge by <code>by</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Gauge-new" data-name="Gauge::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::new</code><code class="api-sig">(initial? : Double) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A gauge at <code>initial</code> (zero unless given).</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Gauge-set" data-name="Gauge::set">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::set</code><code class="api-sig">(Self, Double, timestamp? : Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Set the gauge to <code>v</code>, optionally dating the sample.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Gauge-set_function" data-name="Gauge::set_function">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Gauge::set_function</code><code class="api-sig">(Self, () -&gt; Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Take the value from <code>f</code> instead of a stored number. While a function is set, <code>set</code>, <code>inc</code>, and <code>dec</code> do nothing, matching the Python client.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-GaugeHistogram" data-name="GaugeHistogram">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">GaugeHistogram</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A gauge histogram: the same buckets as a histogram, but the sum and count are a gauge's, and the wire format spells them <code>_gsum</code> and <code>_gcount</code>.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-GaugeHistogram-new" data-name="GaugeHistogram::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">GaugeHistogram::new</code><code class="api-sig">(buckets? : Array[Double], created? : Double) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A gauge histogram over <a href="#metric-buckets"><code>buckets</code></a> (the shared defaults unless given).</p></div>
+</article>
+<article class="api-entry api-method" id="metric-GaugeHistogram-observe" data-name="GaugeHistogram::observe">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">GaugeHistogram::observe</code><code class="api-sig">(Self, Double, exemplar? : Exemplar) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Record one observation.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-GaugeHistogram-snapshot" data-name="GaugeHistogram::snapshot">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">GaugeHistogram::snapshot</code><code class="api-sig">(Self) -&gt; Point</code></span>
+  </div>
+  <div class="api-doc"><p>The snapshot of this gauge histogram.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Histogram" data-name="Histogram">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Histogram</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A histogram with cumulative buckets. Counts are kept per bucket and made cumulative on snapshot, which is what the wire format carries.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Histogram-new" data-name="Histogram::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Histogram::new</code><code class="api-sig">(buckets? : Array[Double], created? : Double) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A histogram over <a href="#metric-buckets"><code>buckets</code></a> (the shared defaults unless given).</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Histogram-observe" data-name="Histogram::observe">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Histogram::observe</code><code class="api-sig">(Self, Double, exemplar? : Exemplar) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Record one observation in the first bucket whose bound it does not exceed, or in the <code>+Inf</code> bucket when it exceeds every bound.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Histogram-snapshot" data-name="Histogram::snapshot">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Histogram::snapshot</code><code class="api-sig">(Self) -&gt; Point</code></span>
+  </div>
+  <div class="api-doc"><p>The snapshot of this histogram: cumulative bucket counts, the sum, and the total count, with the retained exemplars.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Histogram-sum_value" data-name="Histogram::sum_value">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Histogram::sum_value</code><code class="api-sig">(Self) -&gt; Double</code></span>
+  </div>
+  <div class="api-doc"><p>The sum of the observations.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Histogram-total" data-name="Histogram::total">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Histogram::total</code><code class="api-sig">(Self) -&gt; Int64</code></span>
+  </div>
+  <div class="api-doc"><p>The number of observations.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Info" data-name="Info">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Info</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>An info metric: a fixed set of labels whose value is always 1. It carries build and version metadata, which is why it never changes after creation.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Info-labels" data-name="Info::labels">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Info::labels</code><code class="api-sig">(Self) -&gt; Array[(String, String)]</code></span>
+  </div>
+  <div class="api-doc"><p>The labels this info metric carries.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Info-new" data-name="Info::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Info::new</code><code class="api-sig">(Array[(String, String)]) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>An info metric with these labels.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Kind" data-name="Kind">
+  <div class="api-line">
+    <span class="api-kind">enum</span>
+    <span class="api-call"><code class="api-name">Kind</code></span>
+  </div>
+  <div class="api-doc"><p>The kind of a metric, as spelled in the <code># TYPE</code> line of an exposition.</p></div>
+  <div class="api-variants">
+    <div class="api-variant">
+      <code>Counter</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Gauge</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Histogram</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>GaugeHistogram</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Summary</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Info</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>StateSet</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Unknown</code>
+      <p></p>
+    </div>
+  </div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Kind-code" data-name="Kind::code">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Kind::code</code><code class="api-sig">(Self) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>The wire spelling of this kind: <code>counter</code>, <code>gauge</code>, <code>histogram</code>, <code>gaugehistogram</code>, <code>summary</code>, <code>info</code>, <code>stateset</code>, or <code>unknown</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Kind-of" data-name="Kind::of">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Kind::of</code><code class="api-sig">(String) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>The kind a wire spelling names. <code>untyped</code> is the legacy spelling of <code>unknown</code>, and an unrecognised spelling is <code>unknown</code> rather than an error so that a newer peer's exposition still parses.</p></div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="metric-LocalCounter" data-name="LocalCounter">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">LocalCounter</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A non-atomic shard of a counter. Increments land in the shard and are added to the shared counter on <code>flush</code>, which is the local accumulation the Rust client offers; it keeps a hot path off the shared value without requiring thread-local storage.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-LocalCounter-flush" data-name="LocalCounter::flush">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">LocalCounter::flush</code><code class="api-sig">(Self) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Add the shard's value to the shared counter and clear the shard.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-LocalCounter-get" data-name="LocalCounter::get">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">LocalCounter::get</code><code class="api-sig">(Self) -&gt; Double</code></span>
+  </div>
+  <div class="api-doc"><p>The shard's unflushed value.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-LocalCounter-inc" data-name="LocalCounter::inc">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">LocalCounter::inc</code><code class="api-sig">(Self, by? : Double) -&gt; Unit raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Increase the shard by <code>by</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-LocalCounter-reset" data-name="LocalCounter::reset">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">LocalCounter::reset</code><code class="api-sig">(Self) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Drop the unflushed value.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-MetricFamily" data-name="MetricFamily">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">MetricFamily</code></span>
+  </div>
+  <div class="api-doc"><p>A family of series sharing one name, help text, kind, and optional unit. This is what an exposition is written from and what a parser produces.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>name</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>kind</dt>
+      <dd>Kind</dd>
+    </div>
+    <div>
+      <dt>help</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>unit</dt>
+      <dd>String?</dd>
+    </div>
+    <div>
+      <dt>metrics</dt>
+      <dd>Array[Point]</dd>
+    </div>
+  </dl>
+</article>
+<article class="api-entry" id="metric-Point" data-name="Point">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Point</code></span>
+  </div>
+  <div class="api-doc"><p>One series of a family: its labels, its value, and the optional metadata OpenMetrics carries alongside it. <code>created</code> is when the series was created (Unix seconds); <code>exemplars</code> are the retained exemplars, matched to histogram buckets by the value that produced them.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>labels</dt>
+      <dd>Array[(String, String)]</dd>
+    </div>
+    <div>
+      <dt>value</dt>
+      <dd>Value</dd>
+    </div>
+    <div>
+      <dt>timestamp</dt>
+      <dd>Double?</dd>
+    </div>
+    <div>
+      <dt>created</dt>
+      <dd>Double?</dd>
+    </div>
+    <div>
+      <dt>exemplars</dt>
+      <dd>Array[Exemplar]</dd>
+    </div>
+  </dl>
+</article>
+<article class="api-entry" id="metric-ProcessCollector" data-name="ProcessCollector">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">ProcessCollector</code></span>
+    <span class="api-meta">Collector</span>
+  </div>
+  <div class="api-doc"><p>The seven <code>process_*</code> series the Rust client's process collector exposes: CPU time, open and maximum file descriptors, virtual and resident memory, start time, and thread count.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-ProcessCollector-new" data-name="ProcessCollector::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">ProcessCollector::new</code><code class="api-sig">(ProcessStats, prefix? : String) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A process collector over <code>stats</code>. <code>namespace</code> prefixes every name, as the Rust client's namespace does.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>collect</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-ProcessStats" data-name="ProcessStats">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">ProcessStats</code></span>
+  </div>
+  <div class="api-doc"><p>The process numbers a <a href="#metric-ProcessCollector"><code>ProcessCollector</code></a> exports. The caller reads them — this library performs no I/O — which keeps the collector portable across every target.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>cpu_seconds</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>open_fds</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>max_fds</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>virtual_memory_bytes</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>resident_memory_bytes</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>start_time_seconds</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>threads</dt>
+      <dd>Int64</dd>
+    </div>
+  </dl>
+</article>
+<article class="api-entry" id="metric-Registry" data-name="Registry">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Registry</code></span>
+  </div>
+  <div class="api-doc"><p>The set of metrics one exposition exposes, with an optional name prefix and optional constant labels applied to everything registered. A registry refuses a metric name that is not a valid OpenMetrics name, a label name that is not a valid label name, a unit that is not a valid unit, and a name registered twice.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Registry-add" data-name="Registry::add">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::add</code><code class="api-sig">(Self, &amp;Collector) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Add a custom collector. Its families are exposed after the registered metrics, with this registry's prefix and labels applied.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-counter" data-name="Registry::counter">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::counter</code><code class="api-sig">(Self, String, String, unit? : String) -&gt; Counter raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Create a counter, register it, and return it.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-gauge" data-name="Registry::gauge">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::gauge</code><code class="api-sig">(Self, String, String, unit? : String) -&gt; Gauge raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Create a gauge, register it, and return it.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-histogram" data-name="Registry::histogram">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::histogram</code><code class="api-sig">(Self, String, String, buckets? : Array[Double], unit? : String) -&gt; Histogram raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Create a histogram, register it, and return it.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-new" data-name="Registry::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::new</code><code class="api-sig">(prefix? : String, labels? : Array[(String, String)]) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>An empty registry. <code>prefix</code> is prepended to every registered name, and <code>labels</code> is added to every series.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-register" data-name="Registry::register">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::register</code><code class="api-sig">(Self, String, String, &amp;Metric, unit? : String) -&gt; Unit raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Register <code>metric</code> under <code>name</code>, with <code>help</code> and an optional <code>unit</code>. The unit is appended to the name on the wire.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Registry-sub" data-name="Registry::sub">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Registry::sub</code><code class="api-sig">(Self, prefix~ : String, labels? : Array[(String, String)]) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A sub-registry whose names carry <code>prefix</code> after this registry's own prefix, and whose series carry this registry's labels plus <code>labels</code>.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>collect</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-StateSet" data-name="StateSet">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">StateSet</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A set of named states, each true or false. A state set with exactly one true state is the <code>Enum</code> of the Python client.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-StateSet-exclusive" data-name="StateSet::exclusive">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::exclusive</code><code class="api-sig">(Array[String]) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A state set with exactly one state true: the first, which is the Python client's default.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-StateSet-get" data-name="StateSet::get">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::get</code><code class="api-sig">(Self, String) -&gt; Bool</code></span>
+  </div>
+  <div class="api-doc"><p>Whether <code>state</code> is true.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-StateSet-new" data-name="StateSet::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::new</code><code class="api-sig">(Array[String]) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A state set whose states all start false, in the order given.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-StateSet-set" data-name="StateSet::set">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::set</code><code class="api-sig">(Self, String) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Set one state true, leaving the others as they are.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-StateSet-set_many" data-name="StateSet::set_many">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::set_many</code><code class="api-sig">(Self, Map[String, Bool]) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Apply a whole map of states at once.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-StateSet-unset" data-name="StateSet::unset">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">StateSet::unset</code><code class="api-sig">(Self, String) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Set one state false.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Summary" data-name="Summary">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Summary</code></span>
+    <span class="api-meta">Metric</span>
+  </div>
+  <div class="api-doc"><p>A summary: the count and sum of the observations, plus approximate quantiles when the constructor is given target quantiles and their permitted rank error.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Summary-new" data-name="Summary::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Summary::new</code><code class="api-sig">(quantiles? : Array[(Double, Double)], created? : Double) -&gt; Self raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A summary. With <code>quantiles</code> (pairs of target quantile and permitted error), observations also feed a sketch so that <code>snapshot</code> can report those quantiles; without them the summary carries only count and sum, as the official clients do by default.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Summary-observe" data-name="Summary::observe">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Summary::observe</code><code class="api-sig">(Self, Double) -&gt; Unit</code></span>
+  </div>
+  <div class="api-doc"><p>Record one observation.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Summary-snapshot" data-name="Summary::snapshot">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Summary::snapshot</code><code class="api-sig">(Self) -&gt; Point</code></span>
+  </div>
+  <div class="api-doc"><p>The snapshot of this summary: the configured quantiles (empty when none were configured), the sum, and the count.</p></div>
+</article>
+<article class="api-entry api-method" id="metric-Summary-total" data-name="Summary::total">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Summary::total</code><code class="api-sig">(Self) -&gt; Int64</code></span>
+  </div>
+  <div class="api-doc"><p>The number of observations.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>kind</code> · <code>points</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Value" data-name="Value">
+  <div class="api-line">
+    <span class="api-kind">enum</span>
+    <span class="api-call"><code class="api-name">Value</code></span>
+  </div>
+  <div class="api-doc"><p>The value of one series. A histogram carries its cumulative buckets, sum, and count together so that one series stays one <a href="#metric-Point"><code>Point</code></a>; a summary carries its quantiles, sum, and count the same way; a state set carries every state with its flag.</p></div>
+  <div class="api-variants">
+    <div class="api-variant">
+      <code>Number(Double)</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Buckets(buckets~ : Array[(Double, Int64)], sum~ : Double, count~ : Int64)</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)</code>
+      <p></p>
+    </div>
+    <div class="api-variant">
+      <code>State(states~ : Array[(String, Bool)])</code>
+      <p></p>
+    </div>
+  </div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Traits</h3>
+<article class="api-entry" id="metric-Collector" data-name="Collector">
+  <div class="api-line">
+    <span class="api-kind">trait</span>
+    <span class="api-call"><code class="api-name">Collector</code></span>
+  </div>
+  <div class="api-doc"><p>A custom source of metric families. Implement this to contribute series whose shape the built-in metric types do not cover; the registry applies its prefix and constant labels to whatever <code>collect</code> returns.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Collector-collect" data-name="Collector::collect">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Collector::collect</code><code class="api-sig">(Self) -&gt; Array[MetricFamily]</code></span>
+  </div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="metric-LabelSet" data-name="LabelSet">
+  <div class="api-line">
+    <span class="api-kind">trait</span>
+    <span class="api-call"><code class="api-name">LabelSet</code></span>
+  </div>
+  <div class="api-doc"><p>A record that can name its own label pairs. Implementing this for a struct and using <code>TypedFamily</code> gives a family keyed by a typed label set instead of an array of strings.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-LabelSet-pairs" data-name="LabelSet::pairs">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">LabelSet::pairs</code><code class="api-sig">(Self) -&gt; Array[(String, String)]</code></span>
+  </div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="metric-Metric" data-name="Metric">
+  <div class="api-line">
+    <span class="api-kind">trait</span>
+    <span class="api-call"><code class="api-name">Metric</code></span>
+  </div>
+  <div class="api-doc"><p>Anything a registry can collect: a metric, a family of metrics, or a custom collector's contribution. Implement this to plug a new metric shape into a registry without changing the registry.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Metric-kind" data-name="Metric::kind">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Metric::kind</code><code class="api-sig">(Self) -&gt; Kind</code></span>
+  </div>
+</article>
+<article class="api-entry api-method" id="metric-Metric-points" data-name="Metric::points">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Metric::points</code><code class="api-sig">(Self) -&gt; Array[Point]</code></span>
+  </div>
+</article>
+  </div>
+</article>
+</div>
+<!-- END metric -->
+            </section>
+
+            <section class="api-package" id="expo" data-ruler-section="expo">
+              <header class="api-package-head">
+                <span class="plate-no">02</span>
+                <h2>expo</h2>
+                <code>moonbitstack/moonp8s/expo</code>
+                <p>
+                  The two text formats, their negotiation from an
+                  <code>Accept</code> header, and a parser for both. The float and
+                  escape rules are the ones a scraper already implements.
+                </p>
+              </header>
+              <!-- BEGIN expo -->
+<!-- Generated by scripts/gen_api.py from pkg.generated.mbti and the documentation comments; do not edit by hand. -->
+<div class="api-group">
+  <h3 class="api-group-title">Values</h3>
+<article class="api-entry" id="expo-escape_help" data-name="escape_help">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">escape_help</code><code class="api-sig">(String, Bool) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>Escape help text. The compatibility format escapes backslash and newline; OpenMetrics also escapes the double quote, so help text survives a round trip inside a line-oriented document.</p></div>
+</article>
+<article class="api-entry" id="expo-escape_label_value" data-name="escape_label_value">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">escape_label_value</code><code class="api-sig">(String) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>Escape a label value: backslash, double quote, and newline are backslash-escaped, every other character passes through as UTF-8.</p></div>
+</article>
+<article class="api-entry" id="expo-format_float" data-name="format_float">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">format_float</code><code class="api-sig">(Double) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>Format a float the way the official clients do: <code>+Inf</code>, <code>-Inf</code>, and <code>NaN</code> by name; otherwise the shortest decimal that round-trips, with a <code>.0</code> on integers and Go's switch to a two-digit exponent once the integer part is longer than six digits (so <code>1000000.0</code> is <code>1e+06</code>, matching what a Prometheus scrape expects to read).</p></div>
+</article>
+<article class="api-entry" id="expo-negotiate" data-name="negotiate">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">negotiate</code><code class="api-sig">(String) -&gt; Format</code></span>
+  </div>
+  <div class="api-doc"><p>Pick a format from an HTTP <code>Accept</code> header. <code>application/openmetrics-text</code> wins when it names a version this library speaks (or names no version); otherwise a scrape gets the compatibility format, which is also the default when the header is absent or unrecognised.</p></div>
+</article>
+<article class="api-entry" id="expo-openmetrics" data-name="openmetrics">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">openmetrics</code><code class="api-sig">(Array[@metric.MetricFamily]) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>Write families in the OpenMetrics text format, version 1.0.0, ending with the <code># EOF</code> marker the format requires.</p></div>
+</article>
+<article class="api-entry" id="expo-parse" data-name="parse">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">parse</code><code class="api-sig">(String, format? : Format) -&gt; Array[@metric.MetricFamily] raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Parse an exposition back into families. The compatibility format is lossy for info and state sets, which it spells as gauges; OpenMetrics keeps them. The format argument selects which spelling conventions to expect, and the same parser accepts both because the syntax is a superset.</p></div>
+</article>
+<article class="api-entry" id="expo-text" data-name="text">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">text</code><code class="api-sig">(Array[@metric.MetricFamily]) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>Write families in the Prometheus text exposition format, version 0.0.4. Counters gain a <code>_total</code> suffix, info becomes a gauge ending in <code>_info</code>, state sets become gauges, and <code>_created</code>, <code>_gcount</code>, and <code>_gsum</code> series are emitted as separate gauge families, as the compatibility format requires.</p></div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Types and methods</h3>
+<article class="api-entry" id="expo-Format" data-name="Format">
+  <div class="api-line">
+    <span class="api-kind">enum</span>
+    <span class="api-call"><code class="api-name">Format</code></span>
+  </div>
+  <div class="api-doc"><p>The exposition formats this library writes and reads.</p></div>
+  <div class="api-variants">
+    <div class="api-variant">
+      <code>Text004</code>
+      <p>Prometheus text exposition format, version 0.0.4.</p>
+    </div>
+    <div class="api-variant">
+      <code>OpenMetrics100</code>
+      <p>OpenMetrics text format, version 1.0.0.</p>
+    </div>
+  </div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="expo-Format-content_type" data-name="Format::content_type">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Format::content_type</code><code class="api-sig">(Self) -&gt; String</code></span>
+  </div>
+  <div class="api-doc"><p>The <code>Content-Type</code> an HTTP response should carry for this format.</p></div>
+</article>
+  </div>
+</article>
+</div>
+<!-- END expo -->
+            </section>
+
+            <section class="api-package" id="push" data-ruler-section="push">
+              <header class="api-package-head">
+                <span class="plate-no">03</span>
+                <h2>push</h2>
+                <code>moonbitstack/moonp8s/push</code>
+                <p>
+                  Push gateway requests — method, path, headers and body — built and
+                  handed back. Sending them is the caller's, which is why this package
+                  needs no HTTP client.
+                </p>
+              </header>
+              <!-- BEGIN push -->
+<!-- Generated by scripts/gen_api.py from pkg.generated.mbti and the documentation comments; do not edit by hand. -->
+<div class="api-group">
+  <h3 class="api-group-title">Values</h3>
+<article class="api-entry" id="push-delete" data-name="delete">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">delete</code><code class="api-sig">(String, String, grouping_key? : Array[(String, String)]) -&gt; PushRequest</code></span>
+  </div>
+  <div class="api-doc"><p>Build a <code>DELETE</code> that removes every series under <code>job</code> and <code>grouping_key</code>.</p></div>
+</article>
+<article class="api-entry" id="push-push" data-name="push">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">push</code><code class="api-sig">(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -&gt; PushRequest</code></span>
+  </div>
+  <div class="api-doc"><p>Build a <code>PUT</code> that replaces every series under <code>job</code> and <code>grouping_key</code> with the exposition of <code>families</code>.</p></div>
+</article>
+<article class="api-entry" id="push-push_add" data-name="push_add">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">push_add</code><code class="api-sig">(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -&gt; PushRequest</code></span>
+  </div>
+  <div class="api-doc"><p>Build a <code>POST</code> that replaces only the series named in <code>families</code>, leaving other series under the same job and grouping key alone.</p></div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Types and methods</h3>
+<article class="api-entry" id="push-PushRequest" data-name="PushRequest">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">PushRequest</code></span>
+  </div>
+  <div class="api-doc"><p>A push gateway request: the method, the absolute URL path, the headers, and the body. The caller sends it with whatever HTTP client it has; this package never touches a socket.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>http_method</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>path</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>headers</dt>
+      <dd>Array[(String, String)]</dd>
+    </div>
+    <div>
+      <dt>body</dt>
+      <dd>String</dd>
+    </div>
+  </dl>
+</article>
+</div>
+<!-- END push -->
+            </section>
+
+            <section class="api-package" id="asgi" data-ruler-section="asgi">
+              <header class="api-package-head">
+                <span class="plate-no">04</span>
+                <h2>asgi</h2>
+                <code>moonbitstack/moonp8s/asgi</code>
+                <p>
+                  The <code>/metrics</code> handler and the request-counting
+                  middleware, built on <code>moonbitstack/moonasgi</code>.
+                </p>
+              </header>
+              <!-- BEGIN asgi -->
+<!-- Generated by scripts/gen_api.py from pkg.generated.mbti and the documentation comments; do not edit by hand. -->
+<div class="api-group">
+  <h3 class="api-group-title">Values</h3>
+<article class="api-entry" id="asgi-app" data-name="app">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">app</code><code class="api-sig">(@metric.Registry) -&gt; (@http.Request) -&gt; @http.Response</code></span>
+  </div>
+  <div class="api-doc"><p>A <code>/metrics</code> handler for a registry. <code>GET</code> negotiates the format from the <code>Accept</code> header, <code>OPTIONS</code> advertises the allowed methods, anything else is refused with 405, and <code>/favicon.ico</code> is answered empty so a browser probing the endpoint stays quiet.</p></div>
+</article>
+<article class="api-entry" id="asgi-middleware" data-name="middleware">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">middleware</code><code class="api-sig">(@metric.Registry, now? : () -&gt; Double) -&gt; (((@http.Request) -&gt; @http.Response) -&gt; ((@http.Request) -&gt; @http.Response)) raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A middleware that counts handled requests (<code>http_requests</code>, labelled by method, route, and status) and observes their duration in seconds (<code>http_request_duration_seconds</code>, labelled by method and route). The clock is a parameter so a test can drive time; it defaults to wall-clock seconds.</p></div>
+</article>
+</div>
+<!-- END asgi -->
+            </section>
+
+            <section class="api-package" id="compat" data-ruler-section="compat">
+              <header class="api-package-head">
+                <span class="plate-no">05</span>
+                <h2>compat</h2>
+                <code>moonbitstack/moonp8s/compat</code>
+                <p>
+                  The surface an older caller already has: a counter vector keyed by
+                  one label, the server metric set, and the remote report writer —
+                  rebuilt on the registry model so it can be replaced one import at a
+                  time.
+                </p>
+              </header>
+              <!-- BEGIN compat -->
+<!-- Generated by scripts/gen_api.py from pkg.generated.mbti and the documentation comments; do not edit by hand. -->
+<div class="api-group">
+  <h3 class="api-group-title">Values</h3>
+<article class="api-entry" id="compat-default_latency_buckets" data-name="default_latency_buckets">
+  <div class="api-line">
+    <span class="api-kind">let</span>
+    <span class="api-call"><code class="api-name">default_latency_buckets</code><code class="api-sig">: Array[Double]</code></span>
+  </div>
+  <div class="api-doc"><p>The latency buckets the legacy metric package used, in milliseconds.</p></div>
+</article>
+</div>
+<div class="api-group">
+  <h3 class="api-group-title">Types and methods</h3>
+<article class="api-entry" id="compat-CounterVec" data-name="CounterVec">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">CounterVec</code></span>
+    <span class="api-meta">@metric.Metric</span>
+  </div>
+  <div class="api-doc"><p>A counter partitioned by one label string, the shape the legacy metric package exposed. New code should use <code>Family[@metric.Counter]</code>; this exists so an existing call site can move over without being rewritten.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="compat-CounterVec-add" data-name="CounterVec::add">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::add</code><code class="api-sig">(Self, String, Int64) -&gt; Unit raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Add <code>delta</code> to the series named by <code>label</code>, creating it on first sight.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-inc" data-name="CounterVec::inc">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::inc</code><code class="api-sig">(Self, String) -&gt; Unit raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Increment the series named by <code>label</code> by one.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-kind" data-name="CounterVec::kind">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::kind</code><code class="api-sig">(Self) -&gt; @metric.Kind</code></span>
+  </div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-labels" data-name="CounterVec::labels">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::labels</code><code class="api-sig">(Self) -&gt; Array[String]</code></span>
+  </div>
+  <div class="api-doc"><p>The series names seen so far.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-new" data-name="CounterVec::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::new</code><code class="api-sig">(label? : String) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>An empty counter vector whose series are labelled <code>label</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-points" data-name="CounterVec::points">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::points</code><code class="api-sig">(Self) -&gt; Array[@metric.Point]</code></span>
+  </div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-total" data-name="CounterVec::total">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::total</code><code class="api-sig">(Self) -&gt; Int64</code></span>
+  </div>
+  <div class="api-doc"><p>The sum of every series.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-CounterVec-value" data-name="CounterVec::value">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">CounterVec::value</code><code class="api-sig">(Self, String) -&gt; Int64</code></span>
+  </div>
+  <div class="api-doc"><p>The current count of the series named by <code>label</code>.</p></div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="compat-RemoteRequest" data-name="RemoteRequest">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">RemoteRequest</code></span>
+  </div>
+  <div class="api-doc"><p>A report request, ready for the caller to send: a POST of JSON to the reporting endpoint.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>http_method</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>url</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>headers</dt>
+      <dd>Array[(String, String)]</dd>
+    </div>
+    <div>
+      <dt>body</dt>
+      <dd>String</dd>
+    </div>
+  </dl>
+</article>
+<article class="api-entry" id="compat-RemoteWriter" data-name="RemoteWriter">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">RemoteWriter</code></span>
+  </div>
+  <div class="api-doc"><p>A remote writer bound to one reporting endpoint.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="compat-RemoteWriter-new" data-name="RemoteWriter::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">RemoteWriter::new</code><code class="api-sig">(String) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p>A writer for <code>endpoint</code>.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-RemoteWriter-request" data-name="RemoteWriter::request">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">RemoteWriter::request</code><code class="api-sig">(Self, StatReport) -&gt; RemoteRequest</code></span>
+  </div>
+  <div class="api-doc"><p>Build the POST a remote writer sends for <code>report</code>.</p></div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="compat-ServerMetrics" data-name="ServerMetrics">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">ServerMetrics</code></span>
+  </div>
+  <div class="api-doc"><p>The request counter and latency histogram the legacy server metric set exposed: request counts labelled by request signature, and a millisecond latency histogram.</p></div>
+  <div class="api-methods">
+<article class="api-entry api-method" id="compat-ServerMetrics-latency" data-name="ServerMetrics::latency">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">ServerMetrics::latency</code><code class="api-sig">(Self) -&gt; @metric.Histogram</code></span>
+  </div>
+  <div class="api-doc"><p>The latency histogram, in milliseconds.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-ServerMetrics-new" data-name="ServerMetrics::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">ServerMetrics::new</code><code class="api-sig">() -&gt; Self raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>A fresh server metric set.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-ServerMetrics-register" data-name="ServerMetrics::register">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">ServerMetrics::register</code><code class="api-sig">(Self, @metric.Registry, prefix? : String) -&gt; Unit raise @metric.Refused</code></span>
+  </div>
+  <div class="api-doc"><p>Register both series under the legacy names, optionally prefixed.</p></div>
+</article>
+<article class="api-entry api-method" id="compat-ServerMetrics-requests" data-name="ServerMetrics::requests">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">ServerMetrics::requests</code><code class="api-sig">(Self) -&gt; CounterVec</code></span>
+  </div>
+  <div class="api-doc"><p>The request counter.</p></div>
+</article>
+  </div>
+</article>
+<article class="api-entry" id="compat-StatReport" data-name="StatReport">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">StatReport</code></span>
+  </div>
+  <div class="api-doc"><p>The periodic stat report the legacy remote writer posted as JSON.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>name</dt>
+      <dd>String</dd>
+    </div>
+    <div>
+      <dt>timestamp</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>pid</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>reqs_per_second</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>drops</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>average</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>median</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>top90th</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>top99th</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>top99p9th</dt>
+      <dd>Double</dd>
+    </div>
+  </dl>
+</article>
+</div>
+<!-- END compat -->
+            </section>
+          </div>
+        </div>
+      </main>
+
+      <footer class="foot">
+        <span>moonp8s <span data-version>—</span> · Apache-2.0</span>
+        <nav aria-label="Footer">
+          <a href="./">Home</a>
+          <a href="guide.html">Guide</a>
+          <a href="api.html">API</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="examples.html">Examples</a>
+        </nav>
+        <a href="https://github.com/moonbitstack/moonp8s">source</a>
+        <a href="https://mooncakes.io/docs/moonbitstack/moonp8s">mooncakes</a>
+      </footer>
+    </div>
+
+    <script type="module" src="site.js"></script>
+  </body>
+</html>

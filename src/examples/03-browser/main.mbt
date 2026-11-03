@@ -16,6 +16,12 @@ extern "js" fn publish(text : String) -> Unit =
   #|(text) => { globalThis.moonp8s = JSON.parse(text) }
 
 ///|
+/// Hands the page the parser, so the exhibition plate can read whatever a reader
+/// pastes into it with the same code a scraper would run.
+extern "js" fn expose_parse(f : (String) -> String) -> Unit =
+  #|(f) => { globalThis.moonp8sParse = (text) => JSON.parse(f(text)) }
+
+///|
 /// The window the plate draws, in seconds. A scrape every fifteen seconds is the
 /// default the Prometheus documentation uses, and the bucket edges are the ones the
 /// official clients share.
@@ -89,28 +95,63 @@ struct Window {
 }
 
 ///|
-/// Feed the window. Every sample goes to the window histogram, to its own second's
-/// histogram, and to the counter — three readings of one arrival.
-fn build_window() -> Window raise @metric.Refused {
-  let all = @metric.Histogram::new(created=window_start)
-  let counter = @metric.Counter::new(created=window_start)
-  let per_second : Array[@metric.Histogram] = []
-  for _s = 0; _s < window_seconds; _s = _s + 1 {
-    per_second.push(@metric.Histogram::new(created=window_start))
-  }
+/// The window's samples, in the order they arrived: the first `arrivals[0]` belong
+/// to the first second, and so on. One list, so a second reading of the same window —
+/// a different bucket layout, say — counts exactly these values and no others.
+fn samples() -> Array[Double] {
+  let out : Array[Double] = []
   let state = Ref(0xC0FFEEUL)
   let busiest = 135.0
   for second = 0; second < window_seconds; second = second + 1 {
     let count = arrivals[second]
     let heat = count.to_double() / busiest
     for _sample = 0; _sample < count; _sample = _sample + 1 {
-      let value = latency_at(step(state), heat)
+      out.push(latency_at(step(state), heat))
+    }
+  }
+  out
+}
+
+///|
+/// Feed the window. Every sample goes to the window histogram, to its own second's
+/// histogram, and to the counter — three readings of one arrival.
+fn build_window(values : Array[Double]) -> Window raise @metric.Refused {
+  let all = @metric.Histogram::new(created=window_start)
+  let counter = @metric.Counter::new(created=window_start)
+  let per_second : Array[@metric.Histogram] = []
+  for _s = 0; _s < window_seconds; _s = _s + 1 {
+    per_second.push(@metric.Histogram::new(created=window_start))
+  }
+  let mut at = 0
+  for second = 0; second < window_seconds; second = second + 1 {
+    for _sample = 0; _sample < arrivals[second]; _sample = _sample + 1 {
+      let value = values[at]
       all.observe(value)
       per_second[second].observe(value)
       counter.inc()
+      at = at + 1
     }
   }
   { all, per_second, counter, }
+}
+
+///|
+/// One way of cutting the window into buckets.
+struct Binning {
+  label : String
+  bounds : Array[Double]
+}
+
+///|
+/// Three layouts of the same samples: four wide steps, the fourteen the clients
+/// share, and twenty logarithmic ones. Nothing about the samples changes between
+/// them — only where the edges fall.
+fn binnings() -> Array[Binning] raise @metric.Refused {
+  [
+    { label: "4 steps", bounds: [0.01, 0.1, 0.5, 2.5], },
+    { label: "14 steps", bounds: @metric.buckets, },
+    { label: "20 steps", bounds: @metric.exponential(0.004, 1.4, 20), },
+  ]
 }
 
 ///|
@@ -317,8 +358,53 @@ fn specimen_json(specimen : Specimen) -> String {
 }
 
 ///|
+fn binning_json(values : Array[Double]) -> String raise @metric.Refused {
+  let out : Array[String] = []
+  for binning in binnings() {
+    let histogram = @metric.Histogram::new(buckets=binning.bounds)
+    for value in values {
+      histogram.observe(value)
+    }
+    let point = histogram.snapshot()
+    let bounds : Array[String] = []
+    let counts : Array[String] = []
+    match point.value {
+      @metric.Value::Buckets(buckets~, ..) =>
+        for entry in buckets {
+          bounds.push(@expo.format_float(entry.0))
+          counts.push(entry.1.to_string())
+        }
+      _ => ()
+    }
+    out.push(
+      "{" +
+      "\"label\":" +
+      json_string(binning.label) +
+      "," +
+      "\"bounds\":[" +
+      bounds.join(",") +
+      "]," +
+      "\"cum\":[" +
+      counts.join(",") +
+      "]," +
+      "\"median\":" +
+      @expo.format_float(bound_at(histogram, 0.5)) +
+      "," +
+      "\"p90\":" +
+      @expo.format_float(bound_at(histogram, 0.9)) +
+      "," +
+      "\"width\":" +
+      histogram.total().to_string() +
+      "}",
+    )
+  }
+  "[" + out.join(",") + "]"
+}
+
+///|
 fn window_json(
   window : Window,
+  values : Array[Double],
   exposition : String,
   openmetrics : String,
 ) -> String {
@@ -354,6 +440,10 @@ fn window_json(
   out.write_string(",\"sum\":" + @expo.format_float(window.all.sum_value()))
   out.write_string(",\"exposition\":" + json_string(exposition))
   out.write_string(",\"openmetrics\":" + json_string(openmetrics))
+  out.write_string(
+    ",\"binnings\":" +
+    (binning_json(values) catch { @metric.Refused(_) => "[]" }),
+  )
   out.write_string(",\"specimen\":" + specimen_json(specimen))
   out.write_string(",\"specimen_om\":" + specimen_json(specimen_om))
   out.write_string("}")
@@ -361,9 +451,111 @@ fn window_json(
 }
 
 ///|
+/// The kind as the exposition spells it.
+fn kind_text(kind : @metric.Kind) -> String {
+  match kind {
+    Counter => "counter"
+    Gauge => "gauge"
+    Histogram => "histogram"
+    GaugeHistogram => "gaugehistogram"
+    Summary => "summary"
+    Info => "info"
+    StateSet => "stateset"
+    Unknown => "unknown"
+  }
+}
+
+///|
+/// A sample's value as text, for the plate's table.
+fn value_text(value : @metric.Value) -> String {
+  match value {
+    Number(v) => @expo.format_float(v)
+    Buckets(buckets~, sum~, count~) =>
+      "buckets=" +
+      buckets.length().to_string() +
+      " sum=" +
+      @expo.format_float(sum) +
+      " count=" +
+      count.to_string()
+    Quantiles(quantiles~, sum~, count~) =>
+      "quantiles=" +
+      quantiles.length().to_string() +
+      " sum=" +
+      @expo.format_float(sum) +
+      " count=" +
+      count.to_string()
+    State(states~) => {
+      let parts : Array[String] = []
+      for pair in states {
+        parts.push(pair.0 + "=" + (if pair.1 { "1" } else { "0" }))
+      }
+      parts.join(" ")
+    }
+  }
+}
+
+///|
+/// What the parser made of a text: the families, their kinds, and the samples, or
+/// the sentence that refused it. A sample list is capped, because a page is not a
+/// terminal and a thousand rows would be a different instrument.
+fn parse_json(text : String) -> String {
+  let families = @expo.parse(text) catch {
+    @metric.Refused(message) =>
+      return "{\"ok\":false,\"error\":" + json_string(message) + "}"
+  }
+  let rendered : Array[String] = []
+  let mut budget = 120
+  for family in families {
+    let samples : Array[String] = []
+    for point in family.metrics {
+      if budget > 0 {
+        let labels : Array[String] = []
+        for pair in point.labels {
+          labels.push(
+            "[" + json_string(pair.0) + "," + json_string(pair.1) + "]",
+          )
+        }
+        samples.push(
+          "{\"labels\":[" +
+          labels.join(",") +
+          "],\"value\":" +
+          json_string(value_text(point.value)) +
+          "}",
+        )
+        budget = budget - 1
+      }
+    }
+    rendered.push(
+      "{" +
+      "\"name\":" +
+      json_string(family.name) +
+      "," +
+      "\"kind\":" +
+      json_string(kind_text(family.kind)) +
+      "," +
+      "\"help\":" +
+      json_string(family.help) +
+      "," +
+      "\"unit\":" +
+      (match family.unit {
+        Some(unit) => json_string(unit)
+        None => "null"
+      }) +
+      "," +
+      "\"samples\":[" +
+      samples.join(",") +
+      "]" +
+      "}",
+    )
+  }
+  "{\"ok\":true,\"families\":[" + rendered.join(",") + "]}"
+}
+
+///|
 /// Build the window, write it as a scrape, and hand both to the page.
 fn main {
-  let window = build_window() catch {
+  let values = samples()
+  let window = build_window(values) catch {
     @metric.Refused(message) => {
       publish("{\"error\":" + json_string(message) + "}")
       return
@@ -380,5 +572,6 @@ fn main {
   let families = registry.collect(at=window_start + window_seconds.to_double())
   let exposition = @expo.text(families)
   let openmetrics = @expo.openmetrics(families)
-  publish(window_json(window, exposition, openmetrics))
+  publish(window_json(window, values, exposition, openmetrics))
+  expose_parse(parse_json)
 }

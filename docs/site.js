@@ -223,3 +223,72 @@ for (const button of $$("[data-copy]")) {
     }, 1600);
   });
 }
+
+/* ------------------------------------------------------------ the reference */
+
+// How many names live under each package, counted from the page itself: the
+// generator emits entries, not totals, so there is no second number to keep true.
+for (const node of $$("[data-count-for]")) {
+  const package_ = document.getElementById(node.dataset.countFor);
+  if (package_) {
+    const tops = package_.querySelectorAll(".api-entry[data-name]");
+    let count = 0;
+    for (const top of tops) {
+      count += 1 + top.querySelectorAll(".api-method[data-name]").length;
+    }
+    node.textContent = String(count);
+  }
+}
+
+// Type a few letters and the reference narrows to what matches. A method that
+// matches keeps its type visible, because a signature without its type is a riddle.
+const filter = $("#api-filter");
+if (filter) {
+  const tops = $$(".api-group > .api-entry[data-name]");
+  const counter = $("#api-count");
+  const empty = $("#api-empty");
+  const total = tops.reduce(
+    (sum, top) => sum + 1 + top.querySelectorAll(".api-method[data-name]").length,
+    0,
+  );
+  if (counter) counter.textContent = String(total);
+  const shownNode = $("#api-count-shown");
+  if (shownNode) shownNode.textContent = String(total);
+
+  const apply = () => {
+    const query = filter.value.trim().toLowerCase();
+    let shown = 0;
+    for (const top of tops) {
+      const own = !query || top.dataset.name.toLowerCase().includes(query);
+      let any = own;
+      for (const method of top.querySelectorAll(".api-method[data-name]")) {
+        const hit = !query || method.dataset.name.toLowerCase().includes(query);
+        method.hidden = !own && !hit;
+        if (hit) any = true;
+      }
+      top.hidden = !any;
+      if (any) shown += (own ? 1 : 0) + top.querySelectorAll(".api-method:not([hidden])").length;
+    }
+    for (const group of $$(".api-group")) {
+      group.hidden = !group.querySelector(".api-entry[data-name]:not([hidden])");
+    }
+    if (counter) counter.textContent = String(shown);
+    if (shownNode) shownNode.textContent = String(shown);
+    if (empty) empty.hidden = shown !== 0;
+  };
+
+  filter.addEventListener("input", apply);
+  filter.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      filter.value = "";
+      apply();
+      filter.blur();
+    }
+  });
+  addEventListener("keydown", (event) => {
+    if (event.key === "/" && document.activeElement !== filter) {
+      event.preventDefault();
+      filter.focus();
+    }
+  });
+}

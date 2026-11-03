@@ -149,16 +149,16 @@
             </div>
             <div class="annotations" id="annotations">
               <div class="annotation" data-for="name">
-                <b>metric</b>the family, plus this step's suffix
+                <b>metric</b>the family, plus a suffix
               </div>
               <div class="annotation" data-for="labels">
-                <b>labels</b>the bound, sorted with the rest
+                <b>labels</b>the bound, sorted
               </div>
               <div class="annotation" data-for="value">
-                <b>value</b>cumulative: at or below the bound
+                <b>value</b>at or below 0.1 s
               </div>
               <div class="annotation" data-for="time">
-                <b>timestamp</b><span id="time-note">milliseconds since the epoch</span>
+                <b>timestamp</b><span id="time-note">milliseconds in 0.0.4</span>
               </div>
             </div>
             <div class="specimen-foot">
@@ -168,7 +168,7 @@
           </div>
 
           <div class="header-note">
-            <div>
+            <div class="prose">
               <p>
                 <b>Two formats, one model.</b> The compatibility format writes
                 milliseconds and stops there. OpenMetrics writes seconds, a
@@ -194,6 +194,169 @@
                 <code>_count</code>. This window has nothing above 2.5 s.
               </p>
             </aside>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="plate" id="plate-3" data-ruler-section="the aggregation">
+        <div class="plate-head">
+          <span class="plate-no">03 / 05</span>
+          <h2>The edges decide the answer.</h2>
+          <p class="note">
+            The same 1,027 samples, cut three ways. The count, the sum and the rate do
+            not move — the median does, because a histogram answers with the edge it
+            was given. Narrower steps are not a better answer; they are a more
+            expensive question.
+          </p>
+        </div>
+        <div class="plate-body aggregate">
+          <div class="agg-plot">
+            <svg id="agg-svg" aria-hidden="true"></svg>
+            <div class="agg-axis" id="agg-axis"></div>
+          </div>
+          <div class="agg-side">
+            <div class="stops" role="group" aria-label="Bucket layout">
+              <button class="stop" type="button" data-binning="0" aria-pressed="false">
+                4 steps
+              </button>
+              <button class="stop" type="button" data-binning="1" aria-pressed="true">
+                14 steps
+              </button>
+              <button class="stop" type="button" data-binning="2" aria-pressed="false">
+                20 steps
+              </button>
+            </div>
+            <dl class="agg-read">
+              <div><dt>samples</dt><dd id="agg-n">—</dd></div>
+              <div><dt>sum</dt><dd id="agg-sum">—</dd></div>
+              <div><dt>median</dt><dd id="agg-median">—</dd></div>
+              <div><dt>p90</dt><dd id="agg-p90">—</dd></div>
+            </dl>
+            <p class="marginalia agg-hint" id="agg-hint">the count is the same in all three</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="plate" id="plate-4" data-ruler-section="the seams">
+        <div class="plate-head">
+          <span class="plate-no">04 / 05</span>
+          <h2>Three things this library will not decide for you.</h2>
+          <p class="note">
+            When a scrape happens, what is allowed to take a name, and which format
+            leaves the process. All three are handed in, which is why the same code
+            serves a server, a replay of last night, and a test that needs the bytes
+            to be the same twice.
+          </p>
+        </div>
+        <div class="plate-body seams">
+          <div class="seam">
+            <h3>The clock</h3>
+            <p>
+              A collection is stamped with the moment the caller says it happened.
+              Nothing here reads a clock, so a window replayed from a fixture carries
+              the fixture's time, and two runs of a test compare equal.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="k">let</span> families = registry.<span class="a">collect</span>(
+  at=1_700_000_015.0,
+)
+<span class="c">// samples without a time of their own
+// are stamped with it; a backfilled
+// sample keeps the date it was given.</span></code></pre>
+          </div>
+          <div class="seam">
+            <h3>The names</h3>
+            <p>
+              A registry is the only place a name is spent. Register twice and the
+              second attempt is refused with the name it would have collided with,
+              rather than the two quietly merging into one series.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code>registry.<span class="a">register</span>(
+  <span class="s">"jobs"</span>, <span class="s">"Jobs seen."</span>, counter,
+)
+<span class="c">// Refused: "metric already
+// registered: jobs"</span></code></pre>
+          </div>
+          <div class="seam">
+            <h3>The format</h3>
+            <p>
+              The encoder is chosen at the edge, from the request's own
+              <code>Accept</code>. One collected snapshot can leave as the
+              compatibility text or as OpenMetrics; the counts are the same object.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="a">@expo.negotiate</span>(accept)
+<span class="c">// Text004 · OpenMetrics100</span>
+
+<span class="a">@expo.text</span>(families)
+<span class="a">@expo.openmetrics</span>(families)
+<span class="c">// same counts, different edges</span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="plate" id="plate-5" data-ruler-section="the index">
+        <div class="plate-head">
+          <span class="plate-no">05 / 05</span>
+          <h2>The index.</h2>
+          <p class="note">
+            Five packages and a facade. Import the package that owns the type you
+            construct: a re-exported type arrives without its constructors. The
+            complete reference, down to the last derived method, is on
+            <a href="api.html">the API plate</a>.
+          </p>
+        </div>
+        <div class="plate-body">
+          <div class="index-group">
+            <h3>metric — the model, the counters, the registry</h3>
+            <div class="index-row"><span class="name">Counter::new</span><span class="leader"></span><span class="sig">(created?) → Counter</span></div>
+            <div class="index-row"><span class="name">Counter::inc</span><span class="leader"></span><span class="sig">(by?, exemplar?) → Unit raise</span></div>
+            <div class="index-row"><span class="name">Counter::shard</span><span class="leader"></span><span class="sig">() → LocalCounter · accumulate, then flush</span></div>
+            <div class="index-row"><span class="name">Gauge::set, inc, dec, set_function</span><span class="leader"></span><span class="sig">(v, timestamp?) → Unit</span></div>
+            <div class="index-row"><span class="name">Histogram::new</span><span class="leader"></span><span class="sig">(buckets?, created?) → Histogram raise</span></div>
+            <div class="index-row"><span class="name">Histogram::observe</span><span class="leader"></span><span class="sig">(v, exemplar?) → Unit</span></div>
+            <div class="index-row"><span class="name">Summary::new</span><span class="leader"></span><span class="sig">(quantiles~, created?) → Summary raise</span></div>
+            <div class="index-row"><span class="name">Info::new, StateSet::exclusive</span><span class="leader"></span><span class="sig">the two kinds that are not numbers</span></div>
+            <div class="index-row"><span class="name">Family::new</span><span class="leader"></span><span class="sig">(labels, make) → Family[M] raise</span></div>
+            <div class="index-row"><span class="name">Family::labels</span><span class="leader"></span><span class="sig">(Array[String]) → M raise · one child per label set</span></div>
+            <div class="index-row"><span class="name">Registry::new</span><span class="leader"></span><span class="sig">(prefix?, labels?) → Registry raise</span></div>
+            <div class="index-row"><span class="name">Registry::register</span><span class="leader"></span><span class="sig">(name, help, &amp;Metric, unit?) → Unit raise</span></div>
+            <div class="index-row"><span class="name">Registry::collect</span><span class="leader"></span><span class="sig">(at?) → Array[MetricFamily] · the scrape</span></div>
+            <div class="index-row"><span class="name">Registry::sub, add</span><span class="leader"></span><span class="sig">a child registry · a collector worth calling</span></div>
+            <div class="index-row"><span class="name">ProcessCollector, ProcessStats</span><span class="leader"></span><span class="sig">the seven process series, handed in</span></div>
+            <div class="index-row"><span class="name">buckets, linear, exponential</span><span class="leader"></span><span class="sig">the shared edges, and two generators</span></div>
+            <div class="index-row"><span class="name">Refused</span><span class="leader"></span><span class="sig">one message, always about a name or a bound</span></div>
+          </div>
+
+          <div class="index-group">
+            <h3>expo — the two text formats, and their reader</h3>
+            <div class="index-row"><span class="name">text</span><span class="leader"></span><span class="sig">(Array[MetricFamily]) → String</span></div>
+            <div class="index-row"><span class="name">openmetrics</span><span class="leader"></span><span class="sig">(Array[MetricFamily]) → String</span></div>
+            <div class="index-row"><span class="name">negotiate</span><span class="leader"></span><span class="sig">(Accept) → Format</span></div>
+            <div class="index-row"><span class="name">Format::content_type</span><span class="leader"></span><span class="sig">() → String · the header to answer with</span></div>
+            <div class="index-row"><span class="name">parse</span><span class="leader"></span><span class="sig">(String, format?) → Array[MetricFamily] raise</span></div>
+            <div class="index-row"><span class="name">format_float, escape_label_value, escape_help</span><span class="leader"></span><span class="sig">the three spellings that must match a scraper</span></div>
+          </div>
+
+          <div class="index-group">
+            <h3>push — the gateway request, built not sent</h3>
+            <div class="index-row"><span class="name">push, push_add</span><span class="leader"></span><span class="sig">(url, job, families, grouping_key?, format?) → PushRequest</span></div>
+            <div class="index-row"><span class="name">delete</span><span class="leader"></span><span class="sig">(url, job, grouping_key?) → PushRequest</span></div>
+          </div>
+
+          <div class="index-group">
+            <h3>asgi — the handler and the middleware</h3>
+            <div class="index-row"><span class="name">app</span><span class="leader"></span><span class="sig">(Registry) → (Request) → Response</span></div>
+            <div class="index-row"><span class="name">middleware</span><span class="leader"></span><span class="sig">(Registry, now?) → a wrapper for a handler</span></div>
+          </div>
+
+          <div class="index-group">
+            <h3>compat — the surface an older caller already has</h3>
+            <div class="index-row"><span class="name">CounterVec</span><span class="leader"></span><span class="sig">add, inc, value, total, labels — one label, one counter</span></div>
+            <div class="index-row"><span class="name">ServerMetrics</span><span class="leader"></span><span class="sig">new, requests, latency, register(prefix?)</span></div>
+            <div class="index-row"><span class="name">RemoteWriter</span><span class="leader"></span><span class="sig">new(endpoint), request(StatReport) → RemoteRequest</span></div>
           </div>
         </div>
       </section>
