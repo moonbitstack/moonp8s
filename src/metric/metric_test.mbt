@@ -1,0 +1,246 @@
+// Copyright 2026 Leo Cheng
+// SPDX-License-Identifier: Apache-2.0
+
+///|
+fn refused(f : () -> Unit raise @metric.Refused) -> Bool {
+  try {
+    f()
+    false
+  } catch {
+    @metric.Refused(_) => true
+  }
+}
+
+///|
+fn counter_family() -> @metric.Family[@metric.Counter] {
+  @metric.Family::new(["method"], fn() { @metric.Counter::new() }) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+}
+
+///|
+test "counter only increases" {
+  let c = @metric.Counter::new()
+  c.inc()
+  c.inc(by=2.5)
+  assert_true(c.get() == 3.5)
+  assert_true(refused(fn() raise @metric.Refused { c.inc(by=-1.0) }))
+  assert_true(c.get() == 3.5)
+}
+
+///|
+test "gauge moves both ways and dates a sample" {
+  let g = @metric.Gauge::new(initial=10.0)
+  g.inc(by=2.0)
+  g.dec(by=5.0)
+  assert_true(g.get() == 7.0)
+  g.set(3.5, timestamp=1700000000.0)
+  let points = g.points()
+  assert_true(points.length() == 1)
+  match points[0].timestamp {
+    Some(t) => assert_true(t == 1700000000.0)
+    None => abort("expected a timestamp")
+  }
+}
+
+///|
+test "histogram buckets are cumulative on snapshot" {
+  let h = @metric.Histogram::new(buckets=[1.0, 2.0, 4.0]) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  h.observe(0.5)
+  h.observe(1.5)
+  h.observe(3.0)
+  h.observe(9.0)
+  let point = h.snapshot()
+  match point.value {
+    @metric.Value::Buckets(buckets~, sum~, count~) => {
+      assert_true(buckets.length() == 3)
+      assert_true(buckets[0].0 == 1.0 && buckets[0].1 == 1L)
+      assert_true(buckets[1].0 == 2.0 && buckets[1].1 == 2L)
+      assert_true(buckets[2].0 == 4.0 && buckets[2].1 == 3L)
+      assert_true(sum == 14.0)
+      assert_true(count == 4L)
+    }
+    _ => abort("expected buckets")
+  }
+}
+
+///|
+test "histogram refuses unordered bounds" {
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.Histogram::new(buckets=[2.0, 1.0]))
+    }),
+  )
+}
+
+///|
+test "linear and exponential helpers" {
+  let l = @metric.linear(1.0, 2.0, 3) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  assert_true(l.length() == 3)
+  assert_true(l[0] == 1.0 && l[1] == 3.0 && l[2] == 5.0)
+  let e = @metric.exponential(1.0, 2.0, 4) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  assert_true(e.length() == 4)
+  assert_true(e[0] == 1.0 && e[1] == 2.0 && e[2] == 4.0 && e[3] == 8.0)
+}
+
+///|
+test "summary counts and sums without quantiles" {
+  let s = @metric.Summary::new()
+  s.observe(2.0)
+  s.observe(4.0)
+  let point = s.snapshot()
+  match point.value {
+    @metric.Value::Quantiles(quantiles~, sum~, count~) => {
+      assert_true(quantiles.length() == 0)
+      assert_true(sum == 6.0)
+      assert_true(count == 2L)
+    }
+    _ => abort("expected quantiles")
+  }
+}
+
+///|
+test "summary estimates a quantile within its error" {
+  let s = @metric.Summary::new(quantiles=[(0.5, 0.05), (0.9, 0.05)]) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  for i = 1; i <= 100; i = i + 1 {
+    s.observe(i.to_double())
+  }
+  let point = s.snapshot()
+  match point.value {
+    @metric.Value::Quantiles(quantiles~, ..) => {
+      assert_true(quantiles.length() == 2)
+      let median = quantiles[0].1
+      assert_true(median >= 40.0 && median <= 60.0)
+    }
+    _ => abort("expected quantiles")
+  }
+}
+
+///|
+test "family creates one child per label combination" {
+  let family = counter_family()
+  let a = family.labels(["GET"])
+  let b = family.labels(["GET"])
+  let c = family.labels(["POST"])
+  a.inc()
+  assert_true(b.get() == 1.0)
+  assert_true(c.get() == 0.0)
+  assert_true(family.size() == 2)
+}
+
+///|
+test "family refuses a wrong label count" {
+  let family = counter_family()
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(family.labels(["GET", "extra"]))
+    }),
+  )
+}
+
+///|
+test "state set exclusive keeps one state true" {
+  let set = @metric.StateSet::exclusive(["a", "b", "c"])
+  assert_true(set.get("a"))
+  assert_true(!set.get("b"))
+  set.set("b")
+  assert_true(!set.get("a"))
+  assert_true(set.get("b"))
+  assert_true(!set.get("c"))
+}
+
+///|
+test "registry collects in registration order" {
+  let registry = @metric.Registry::new()
+  let requests = registry.counter("requests", "Requests.") catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  requests.inc()
+  let gauge = registry.gauge("temperature", "Temperature.") catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  gauge.set(3.0)
+  let families = registry.collect()
+  assert_true(families.length() == 2)
+  assert_true(families[0].name == "requests")
+  match families[0].kind {
+    @metric.Kind::Counter => ()
+    _ => abort("expected counter")
+  }
+  assert_true(families[1].name == "temperature")
+  match families[1].kind {
+    @metric.Kind::Gauge => ()
+    _ => abort("expected gauge")
+  }
+}
+
+///|
+test "registry refuses duplicate names and invalid names" {
+  let registry = @metric.Registry::new()
+  ignore(
+    registry.counter("requests", "Requests.") catch {
+      @metric.Refused(_) => abort("unexpected refusal")
+    },
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(registry.counter("requests", "Again."))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(registry.counter("1bad", "Bad."))
+    }),
+  )
+}
+
+///|
+test "registry applies a prefix and constant labels" {
+  let registry = @metric.Registry::new(prefix="app", labels=[("region", "eu")]) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  let counter = registry.counter("requests", "Requests.") catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  counter.inc()
+  let families = registry.collect()
+  assert_true(families[0].name == "app_requests")
+  assert_true(families[0].metrics[0].labels.length() == 1)
+  assert_true(families[0].metrics[0].labels[0].0 == "region")
+  assert_true(families[0].metrics[0].labels[0].1 == "eu")
+}
+
+///|
+test "sub registry extends the prefix and labels" {
+  let registry = @metric.Registry::new(prefix="app") catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  let sub = registry.sub(prefix="http", labels=[("region", "eu")]) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  let counter = sub.counter("requests", "Requests.") catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  counter.inc()
+  let families = sub.collect()
+  assert_true(families[0].name == "app_http_requests")
+  assert_true(families[0].metrics[0].labels[0].1 == "eu")
+}
+
+///|
+test "names are validated by the OpenMetrics character rules" {
+  assert_true(@metric.is_valid_metric_name("http_requests"))
+  assert_true(!@metric.is_valid_metric_name("1http"))
+  assert_true(@metric.is_valid_label_name("_method"))
+  assert_true(!@metric.is_valid_label_name("1method"))
+  assert_true(@metric.is_valid_unit("seconds"))
+  assert_true(!@metric.is_valid_unit("1seconds"))
+}

@@ -1,15 +1,37 @@
-name = "moonbitstack/CHANGE-ME"
+name = "moonbitstack/moonp8s"
 
 version = "0.1.0"
 
 readme = "README.md"
 
-repository = "https://github.com/moonbitstack/CHANGE-ME"
+repository = "https://github.com/moonbitstack/moonp8s"
 
 license = "Apache-2.0"
 
-keywords = [ "moonbit" ]
+keywords = [
+  "prometheus",
+  "p8s",
+  "metrics",
+  "openmetrics",
+  "exposition",
+  "monitoring",
+  "observability",
+  "telemetry",
+  "counter",
+  "gauge",
+  "histogram",
+  "summary",
+  "exemplar",
+  "pushgateway",
+  "client",
+  "asgi",
+  "moonbit",
+]
 
-description = "One sentence saying what this is and what it is not."
+description = "Prometheus metrics for MoonBit."
 
 source = "src"
+
+import {
+  "moonbitstack/moonasgi@0.10.5",
+}

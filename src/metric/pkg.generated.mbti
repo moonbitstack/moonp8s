@@ -1,0 +1,206 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/metric"
+
+// Values
+pub let buckets : Array[Double]
+
+pub let exemplar_label_limit : Int32
+
+pub fn exponential(Double, Double, Int32) -> Array[Double] raise Refused
+
+pub fn is_valid_label_name(String) -> Bool
+
+pub fn is_valid_metric_name(String) -> Bool
+
+pub fn is_valid_unit(String) -> Bool
+
+pub fn linear(Double, Double, Int32) -> Array[Double] raise Refused
+
+pub fn point_of(Value) -> Point
+
+// Errors
+pub(all) suberror Refused {
+  Refused(String)
+}
+pub fn Refused::message(Self) -> String
+
+// Types and methods
+pub struct Counter {
+  // private fields
+}
+pub fn Counter::get(Self) -> Double
+pub fn Counter::inc(Self, by? : Double, exemplar? : Exemplar) -> Unit raise Refused
+pub fn Counter::kind(Self) -> Kind
+pub fn Counter::new(created? : Double) -> Self
+pub fn Counter::points(Self) -> Array[Point]
+pub impl Metric for Counter
+
+type Entry
+
+pub(all) struct Exemplar {
+  labels : Array[(String, String)]
+  value : Double
+  timestamp : Double?
+}
+pub fn Exemplar::new(Array[(String, String)], Double, timestamp? : Double) -> Self raise Refused
+
+pub struct Family[M] {
+  // private fields
+}
+pub fn[M] Family::clear(Self[M]) -> Unit
+pub fn[M : Metric] Family::kind(Self[M]) -> Kind
+pub fn[M] Family::labels(Self[M], Array[String]) -> M raise Refused
+pub fn[M : Metric] Family::new(Array[String], () -> M raise Refused) -> Self[M] raise Refused
+pub fn[M : Metric] Family::points(Self[M]) -> Array[Point]
+pub fn[M] Family::remove(Self[M], Array[String]) -> Unit
+pub fn[M] Family::size(Self[M]) -> Int32
+pub impl[M : Metric] Metric for Family[M]
+
+type FamilyEntry[M]
+
+pub struct Gauge {
+  // private fields
+}
+pub fn Gauge::dec(Self, by? : Double) -> Unit
+pub fn Gauge::get(Self) -> Double
+pub fn Gauge::inc(Self, by? : Double) -> Unit
+pub fn Gauge::kind(Self) -> Kind
+pub fn Gauge::new(initial? : Double) -> Self
+pub fn Gauge::points(Self) -> Array[Point]
+pub fn Gauge::set(Self, Double, timestamp? : Double) -> Unit
+pub impl Metric for Gauge
+
+pub struct GaugeHistogram {
+  // private fields
+}
+pub fn GaugeHistogram::kind(Self) -> Kind
+pub fn GaugeHistogram::new(buckets? : Array[Double], created? : Double) -> Self raise Refused
+pub fn GaugeHistogram::observe(Self, Double, exemplar? : Exemplar) -> Unit
+pub fn GaugeHistogram::points(Self) -> Array[Point]
+pub fn GaugeHistogram::snapshot(Self) -> Point
+pub impl Metric for GaugeHistogram
+
+type Gk
+
+pub struct Histogram {
+  // private fields
+}
+pub fn Histogram::kind(Self) -> Kind
+pub fn Histogram::new(buckets? : Array[Double], created? : Double) -> Self raise Refused
+pub fn Histogram::observe(Self, Double, exemplar? : Exemplar) -> Unit
+pub fn Histogram::points(Self) -> Array[Point]
+pub fn Histogram::snapshot(Self) -> Point
+pub fn Histogram::sum_value(Self) -> Double
+pub fn Histogram::total(Self) -> Int64
+pub impl Metric for Histogram
+
+pub struct Info {
+  // private fields
+}
+pub fn Info::kind(Self) -> Kind
+pub fn Info::labels(Self) -> Array[(String, String)]
+pub fn Info::new(Array[(String, String)]) -> Self raise Refused
+pub fn Info::points(Self) -> Array[Point]
+pub impl Metric for Info
+
+pub(all) enum Kind {
+  Counter
+  Gauge
+  Histogram
+  GaugeHistogram
+  Summary
+  Info
+  StateSet
+  Unknown
+}
+pub fn Kind::code(Self) -> String
+pub fn Kind::of(String) -> Self
+
+pub(all) struct MetricFamily {
+  name : String
+  kind : Kind
+  help : String
+  unit : String?
+  metrics : Array[Point]
+}
+
+pub(all) struct Point {
+  labels : Array[(String, String)]
+  value : Value
+  timestamp : Double?
+  created : Double?
+  exemplars : Array[Exemplar]
+}
+
+pub struct Registry {
+  // private fields
+}
+pub fn Registry::add(Self, &Collector) -> Unit
+pub fn Registry::collect(Self) -> Array[MetricFamily]
+pub fn Registry::counter(Self, String, String, unit? : String) -> Counter raise Refused
+pub fn Registry::gauge(Self, String, String, unit? : String) -> Gauge raise Refused
+pub fn Registry::histogram(Self, String, String, buckets? : Array[Double], unit? : String) -> Histogram raise Refused
+pub fn Registry::new(prefix? : String, labels? : Array[(String, String)]) -> Self raise Refused
+pub fn Registry::register(Self, String, String, &Metric, unit? : String) -> Unit raise Refused
+pub fn Registry::sub(Self, prefix~ : String, labels? : Array[(String, String)]) -> Self raise Refused
+
+pub struct StateSet {
+  // private fields
+}
+pub fn StateSet::exclusive(Array[String]) -> Self
+pub fn StateSet::get(Self, String) -> Bool
+pub fn StateSet::kind(Self) -> Kind
+pub fn StateSet::new(Array[String]) -> Self
+pub fn StateSet::points(Self) -> Array[Point]
+pub fn StateSet::set(Self, String) -> Unit
+pub fn StateSet::set_many(Self, Map[String, Bool]) -> Unit
+pub fn StateSet::unset(Self, String) -> Unit
+pub impl Metric for StateSet
+
+pub struct Summary {
+  // private fields
+}
+pub fn Summary::kind(Self) -> Kind
+pub fn Summary::new(quantiles? : Array[(Double, Double)], created? : Double) -> Self raise Refused
+pub fn Summary::observe(Self, Double) -> Unit
+pub fn Summary::points(Self) -> Array[Point]
+pub fn Summary::snapshot(Self) -> Point
+pub fn Summary::total(Self) -> Int64
+pub impl Metric for Summary
+
+type TypedChild[M]
+
+pub struct TypedFamily[L, M] {
+  // private fields
+}
+pub fn[L : Hash + Eq, M] TypedFamily::clear(Self[L, M]) -> Unit
+pub fn[L : Hash + Eq + LabelSet, M] TypedFamily::get(Self[L, M], L) -> M raise Refused
+pub fn[L, M : Metric] TypedFamily::kind(Self[L, M]) -> Kind
+pub fn[L : Hash + Eq, M : Metric] TypedFamily::new(() -> M raise Refused) -> Self[L, M] raise Refused
+pub fn[L, M : Metric] TypedFamily::points(Self[L, M]) -> Array[Point]
+pub fn[L : Hash + Eq, M] TypedFamily::remove(Self[L, M], L) -> Unit
+pub fn[L, M] TypedFamily::size(Self[L, M]) -> Int32
+pub impl[L, M : Metric] Metric for TypedFamily[L, M]
+
+pub(all) enum Value {
+  Number(Double)
+  Buckets(buckets~ : Array[(Double, Int64)], sum~ : Double, count~ : Int64)
+  Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)
+  State(states~ : Array[(String, Bool)])
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait Collector {
+  fn collect(Self) -> Array[MetricFamily]
+}
+
+pub(open) trait LabelSet {
+  fn pairs(Self) -> Array[(String, String)]
+}
+
+pub(open) trait Metric {
+  fn kind(Self) -> Kind
+  fn points(Self) -> Array[Point]
+}
