@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/expo"
+
+import {
+  "moonbitstack/moonp8s/metric",
+}
+
+// Values
+pub fn escape_help(String, Bool) -> String
+
+pub fn escape_label_value(String) -> String
+
+pub fn format_float(Double) -> String
+
+pub fn negotiate(String) -> Format
+
+pub fn openmetrics(Array[@metric.MetricFamily]) -> String
+
+pub fn parse(String, format? : Format) -> Array[@metric.MetricFamily] raise @metric.Refused
+
+pub fn text(Array[@metric.MetricFamily]) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Format {
+  Text004
+  OpenMetrics100
+}
+pub fn Format::content_type(Self) -> String
+
+// Type aliases
+
+// Traits
