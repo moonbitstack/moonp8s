@@ -62,3 +62,24 @@ test "OpenMetrics ends with the EOF marker" {
   let doc = openmetrics(unit_families())
   assert_true(doc.contains("# EOF\n"))
 }
+
+///|
+test "a gauge histogram uses gcount and gsum" {
+  let families = try {
+    let registry = @metric.Registry::new()
+    let histogram = @metric.GaugeHistogram::new(buckets=[1.0])
+    registry.register("gh", "Gauge histogram.", histogram)
+    histogram.observe(0.5)
+    registry.collect()
+  } catch {
+    @metric.Refused(message) => abort(message)
+  }
+  let text_doc = text(families)
+  assert_true(text_doc.contains("gh_bucket{le=\"1.0\"} 1.0"))
+  assert_true(text_doc.contains("gh_gcount 1.0"))
+  assert_true(text_doc.contains("gh_gsum 0.5"))
+  assert_true(!text_doc.contains("gh_count"))
+  let om_doc = openmetrics(families)
+  assert_true(om_doc.contains("# TYPE gh gaugehistogram"))
+  assert_true(om_doc.contains("gh_gcount 1.0"))
+}
