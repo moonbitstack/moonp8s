@@ -1,0 +1,8 @@
+// `moon run src/examples/push`: build a push gateway request and print what a
+// client would send.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonp8s",
+  "moonbitstack/moonp8s/metric",
+}

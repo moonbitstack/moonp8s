@@ -1,0 +1,9 @@
+// The /metrics handler and the request-counting middleware for an ASGI
+// application, built on moonbitstack/moonasgi.
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitstack/moonasgi",
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+}

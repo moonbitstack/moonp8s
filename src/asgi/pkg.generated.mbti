@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/asgi"
+
+import {
+  "moonbitstack/moonasgi/http",
+  "moonbitstack/moonp8s/metric",
+}
+
+// Values
+pub fn app(@metric.Registry) -> (@http.Request) -> @http.Response
+
+pub fn middleware(@metric.Registry, now? : () -> Double) -> (((@http.Request) -> @http.Response) -> ((@http.Request) -> @http.Response)) raise @metric.Refused
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

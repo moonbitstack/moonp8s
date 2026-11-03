@@ -1,13 +1,83 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbitstack/CHANGE-ME"
+package "moonbitstack/moonp8s"
+
+import {
+  "moonbitstack/moonasgi/http",
+  "moonbitstack/moonp8s/expo",
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/push",
+}
 
 // Values
-pub fn greet(StringView) -> String
+pub fn app(@metric.Registry) -> (@http.Request) -> @http.Response
+
+pub let buckets : Array[Double]
+
+pub fn delete(String, String, grouping_key? : Array[(String, String)]) -> @push.PushRequest
+
+pub let exemplar_label_limit : Int32
+
+pub fn exponential(Double, Double, Int32) -> Array[Double] raise @metric.Refused
+
+pub fn format_float(Double) -> String
+
+pub fn is_valid_label_name(String) -> Bool
+
+pub fn is_valid_metric_name(String) -> Bool
+
+pub fn is_valid_unit(String) -> Bool
+
+pub fn linear(Double, Double, Int32) -> Array[Double] raise @metric.Refused
+
+pub fn middleware(@metric.Registry, now? : () -> Double) -> (((@http.Request) -> @http.Response) -> ((@http.Request) -> @http.Response)) raise @metric.Refused
+
+pub fn negotiate(String) -> @expo.Format
+
+pub fn openmetrics(Array[@metric.MetricFamily]) -> String
+
+pub fn push(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> @push.PushRequest
+
+pub fn push_add(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> @push.PushRequest
+
+pub fn text(Array[@metric.MetricFamily]) -> String
 
 // Errors
 
 // Types and methods
 
 // Type aliases
+pub using @metric {type Counter}
+
+pub using @metric {type Exemplar}
+
+pub using @metric {type Family}
+
+pub using @expo {type Format}
+
+pub using @metric {type Gauge}
+
+pub using @metric {type GaugeHistogram}
+
+pub using @metric {type Histogram}
+
+pub using @metric {type Info}
+
+pub using @metric {type Kind}
+
+pub using @metric {type MetricFamily}
+
+pub using @metric {type Point}
+
+pub using @push {type PushRequest}
+
+pub using @metric {type Registry}
+
+pub using @metric {type StateSet}
+
+pub using @metric {type Summary}
+
+pub using @metric {type TypedFamily}
+
+pub using @metric {type Value}
 
 // Traits

@@ -1,0 +1,8 @@
+// Push gateway request construction: the method, path, headers, and body the
+// caller sends. The path layout and grouping key escaping follow
+// https://github.com/prometheus/pushgateway#url.
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+}

@@ -1,0 +1,8 @@
+// `moon run src/examples/basic`: build one of every metric kind, then write the
+// same registry in both text formats.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonp8s",
+  "moonbitstack/moonp8s/metric",
+}

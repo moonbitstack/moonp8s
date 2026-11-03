@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/push"
+
+import {
+  "moonbitstack/moonp8s/expo",
+  "moonbitstack/moonp8s/metric",
+}
+
+// Values
+pub fn delete(String, String, grouping_key? : Array[(String, String)]) -> PushRequest
+
+pub fn push(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> PushRequest
+
+pub fn push_add(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> PushRequest
+
+// Errors
+
+// Types and methods
+pub(all) struct PushRequest {
+  http_method : String
+  path : String
+  headers : Array[(String, String)]
+  body : String
+}
+
+// Type aliases
+
+// Traits

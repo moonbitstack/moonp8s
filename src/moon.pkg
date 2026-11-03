@@ -1,2 +1,12 @@
-// What this package implements, and a first-hand link to the specification it
-// implements. A package without that link is not finished.
+// moonp8s: Prometheus metrics for MoonBit. The work is done in the subpackages;
+// the root re-exports their surface so one import reaches the common types.
+//
+// The formats implemented here are the Prometheus text exposition format
+// (https://prometheus.io/docs/instrumenting/exposition_formats/) and OpenMetrics
+// 1.0 (https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md).
+import {
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+  "moonbitstack/moonp8s/push",
+  "moonbitstack/moonp8s/asgi",
+}
