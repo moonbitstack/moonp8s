@@ -29,6 +29,46 @@ test "counter only increases" {
 }
 
 ///|
+test "a counter's name may say `_total`, and it comes out once, as client_python writes it" {
+  let registry = @metric.Registry::new()
+  let said = registry.counter("orders_total", "Said.")
+  said.inc()
+  let plain = registry.counter("visits", "Plain.")
+  plain.inc()
+  let names = registry.collect().map(family => family.name)
+  assert_eq(names, ["orders", "visits"])
+  // The family owns the name, so the two spellings are one metric.
+  let twice = try {
+    ignore(registry.counter("orders", "Again."))
+    false
+  } catch {
+    @metric.Refused(_) => true
+  }
+  assert_true(twice)
+  // Only a counter's samples get the suffix, so nothing else loses it.
+  let gauge = registry.gauge("left_total", "A gauge.")
+  gauge.set(1.0)
+  assert_true(
+    registry.collect().map(family => family.name).contains("left_total"),
+  )
+}
+
+///|
+test "an info or a state set cannot have a unit" {
+  let registry = @metric.Registry::new()
+  let info = @metric.Info::new([("version", "1")]) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  let refused = try {
+    registry.register("build", "Build.", info, unit="seconds")
+    false
+  } catch {
+    @metric.Refused(_) => true
+  }
+  assert_true(refused)
+}
+
+///|
 test "gauge moves both ways and dates a sample" {
   let g = @metric.Gauge::new(initial=10.0)
   g.inc(by=2.0)

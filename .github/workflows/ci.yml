@@ -54,6 +54,9 @@ jobs:
             fi
           done
 
+      - name: generated code is up to date
+        run: moon run src/cmd/metrics --target native -- -C src/examples/08-annotated orders.mbt -o orders.g.mbt --check
+
       - name: lint (fmt is clean)
         run: |
           moon fmt && git diff --exit-code

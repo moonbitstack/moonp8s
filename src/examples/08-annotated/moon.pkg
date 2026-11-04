@@ -1,0 +1,10 @@
+// A function counted and timed with `#p8s.*`. `orders.g.mbt` comes from `cmd/metrics`; a project
+// wires it as a dev_build rule.
+import {
+  "moonbitstack/moonp8s",
+  "moonbitstack/moonp8s/metric",
+}
+
+pkgtype(kind: "executable")
+
+formatter(ignore: [ "orders.g.mbt" ])

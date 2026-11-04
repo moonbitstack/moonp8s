@@ -1,0 +1,17 @@
+// The generator behind `#p8s.counter` and `#p8s.timed`: a metered wrapper for each annotated
+// function. moonx runs it as a dev_build rule; see the README.
+supported_targets = "+native+wasm"
+
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonast/quote",
+  "moonbitstack/moonast/attr",
+  "moonbitstack/moonast/gen",
+  "moonbitstack/moonast/cli",
+  "moonbitlang/parser/attribute",
+  "moonbitlang/async",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+}

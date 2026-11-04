@@ -15,6 +15,53 @@ generated reference, a parser to try, and four runnable examples.
 moon add moonbitstack/moonp8s
 ```
 
+## Annotations
+
+Count and time a function by saying so on it. The function stays as it is, and a generator adds one
+beside it:
+
+```moonbit
+#p8s.counter("orders_total", help="Orders asked for.")
+#p8s.counter("orders_refused_total", help="Orders refused.", on=raised)
+#p8s.timed("order_seconds", help="Seconds to place an order.", buckets="0.5, 1, 5")
+fn place(item : String) -> Int raise Sold {
+  ...
+}
+```
+
+The generator writes one metric per annotation as a top-level `let`, `place_metered`, and
+`register_metrics`, which puts them all in a registry:
+
+<!-- nocheck -->
+```moonbit
+let registry = @moonp8s.Registry::new()
+register_metrics(registry)
+let receipt = place_metered("tea", now=clock)
+```
+
+`on` says when a counter moves: `call` (the default), `done` for a call that returned, or `raised`.
+`buckets` defaults to the same list as `Histogram::new`. `now` is a clock in seconds, asked for only
+when something is timed. The wrapper records a timing whichever way the call ends, a cancelled one
+included.
+
+The generator wires in as a dev_build rule, in `moon.mod`:
+
+<!-- nocheck -->
+```
+rule(name: "metrics", command: "moonx moonbitstack/moonp8s/cmd/metrics -C \"$mod_dir\" \"$input\" -o \"$output\"")
+```
+
+and in the `moon.pkg` of the package, which imports `moonbitstack/moonp8s` and
+`moonbitstack/moonp8s/metric`:
+
+<!-- nocheck -->
+```
+dev_build(rule: "metrics", input: "orders.mbt", output: "orders.g.mbt")
+formatter(ignore: [ "orders.g.mbt" ])
+```
+
+`moon run src/examples/08-annotated` shows it.
+
 ## Quick start
 
 ```moonbit
@@ -111,7 +158,8 @@ impl @moonp8s.LabelSet for Route with pairs(self) {
 
 A registry applies an optional name prefix and constant labels, refuses an
 invalid name, a duplicate name, and an invalid unit, and collects everything in
-registration order:
+registration order. A counter's name may end in `_total` or not: the family is named without it,
+and its samples are written with it, so it comes out once:
 
 ```moonbit
 let registry = @moonp8s.Registry::new(prefix="app", labels=[("region", "eu")])

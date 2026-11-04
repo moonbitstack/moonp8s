@@ -41,7 +41,7 @@
       <div class="ruler-thumb" id="ruler-thumb"></div>
     </div>
     <div class="ruler-readout" aria-hidden="true">
-      <span id="readout-window">plate 01 / 09</span>
+      <span id="readout-window">plate 01 / 10</span>
       <b id="readout-line">0%</b>
     </div>
 
@@ -85,14 +85,15 @@
 
         <nav class="doc-toc" aria-label="Steps">
           <a href="#install"><span>01</span>install</a>
-          <a href="#first"><span>02</span>the first metric</a>
-          <a href="#labels"><span>03</span>labels</a>
-          <a href="#histogram"><span>04</span>a histogram</a>
-          <a href="#exposition"><span>05</span>the exposition</a>
-          <a href="#scrape"><span>06</span>the scrape</a>
-          <a href="#rate"><span>07</span>rate</a>
-          <a href="#limits"><span>08</span>limits</a>
-          <a href="#not-here"><span>09</span>not here</a>
+          <a href="#annotations"><span>02</span>annotations</a>
+          <a href="#first"><span>03</span>the first metric</a>
+          <a href="#labels"><span>04</span>labels</a>
+          <a href="#histogram"><span>05</span>a histogram</a>
+          <a href="#exposition"><span>06</span>the exposition</a>
+          <a href="#scrape"><span>07</span>the scrape</a>
+          <a href="#rate"><span>08</span>rate</a>
+          <a href="#limits"><span>09</span>limits</a>
+          <a href="#not-here"><span>10</span>not here</a>
         </nav>
 
         <section class="doc-section" id="install" data-ruler-section="install">
@@ -102,7 +103,8 @@
             <p>
               One line. The module has no dependency at runtime except the standard
               library; <code>moonasgi</code> is used only by the <code>asgi</code>
-              package, and only if you import it.
+              package, and <code>moonast</code> only by the generator, and only if you
+              run it.
             </p>
             <!-- nocheck: a command, not a program -->
             <pre><code>moon add moonbitstack/moonp8s</code></pre>
@@ -122,8 +124,36 @@
           </aside>
         </section>
 
-        <section class="doc-section" id="first" data-ruler-section="first metric">
+        <section class="doc-section" id="annotations" data-ruler-section="annotations">
           <div class="doc-mark"><span class="plate-no">02</span></div>
+          <div class="doc-body">
+            <h2>Say it on the function.</h2>
+            <p>
+              Most metrics count or time one function, so that is where they are
+              written. The function stays as it is, and a generator adds
+              <code>place_metered</code> beside it, a metric for each annotation, and
+              <code>register_metrics</code>.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="a">#p8s.counter</span>(<span class="s">"orders_total"</span>, help=<span class="s">"Orders asked for."</span>)
+<span class="a">#p8s.counter</span>(<span class="s">"orders_refused_total"</span>, help=<span class="s">"Orders refused."</span>, on=raised)
+<span class="a">#p8s.timed</span>(<span class="s">"order_seconds"</span>, help=<span class="s">"Seconds to place an order."</span>, buckets=<span class="s">"0.5, 1, 5"</span>)
+<span class="k">fn</span> place(item : String) -&gt; Int <span class="k">raise</span> Sold { ... }
+
+<span class="k">let</span> registry = <span class="a">@moonp8s.Registry</span>::new()
+register_metrics(registry)
+<span class="k">let</span> receipt = place_metered(<span class="s">"tea"</span>, now=clock)</code></pre>
+            <p>
+              <code>on</code> is <code>call</code>, <code>done</code> or
+              <code>raised</code>. A timing is recorded whichever way the call ends, a
+              cancelled one included. The rest of this page builds the same metrics by
+              hand, which is what the generated code does.
+            </p>
+          </div>
+        </section>
+
+        <section class="doc-section" id="first" data-ruler-section="first metric">
+          <div class="doc-mark"><span class="plate-no">03</span></div>
           <div class="doc-body">
             <h2>A registry and a gauge.</h2>
             <p>
@@ -159,7 +189,7 @@ jobs_running 3.0</div>
         </section>
 
         <section class="doc-section" id="labels" data-ruler-section="labels">
-          <div class="doc-mark"><span class="plate-no">03</span></div>
+          <div class="doc-mark"><span class="plate-no">04</span></div>
           <div class="doc-body">
             <h2>One metric, many series.</h2>
             <p>
@@ -197,7 +227,7 @@ jobs_running{queue="billing"} 1.0</div>
         </section>
 
         <section class="doc-section" id="histogram" data-ruler-section="histogram">
-          <div class="doc-mark"><span class="plate-no">04</span></div>
+          <div class="doc-mark"><span class="plate-no">05</span></div>
           <div class="doc-body">
             <h2>A histogram, and its edges.</h2>
             <p>
@@ -235,7 +265,7 @@ latency.<span class="a">observe</span>(0.317)
         </section>
 
         <section class="doc-section" id="exposition" data-ruler-section="exposition">
-          <div class="doc-mark"><span class="plate-no">05</span></div>
+          <div class="doc-mark"><span class="plate-no">06</span></div>
           <div class="doc-body">
             <h2>Two formats, one snapshot.</h2>
             <p>
@@ -274,7 +304,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="scrape" data-ruler-section="the scrape">
-          <div class="doc-mark"><span class="plate-no">06</span></div>
+          <div class="doc-mark"><span class="plate-no">07</span></div>
           <div class="doc-body">
             <h2>The handler.</h2>
             <p>
@@ -307,7 +337,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="rate" data-ruler-section="rate">
-          <div class="doc-mark"><span class="plate-no">07</span></div>
+          <div class="doc-mark"><span class="plate-no">08</span></div>
           <div class="doc-body">
             <h2>Rate is arithmetic, not an API.</h2>
             <p>
@@ -337,7 +367,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="limits" data-ruler-section="limits">
-          <div class="doc-mark"><span class="plate-no">08</span></div>
+          <div class="doc-mark"><span class="plate-no">09</span></div>
           <div class="doc-body">
             <h2>What it refuses.</h2>
             <p>
@@ -370,7 +400,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="not-here" data-ruler-section="not here">
-          <div class="doc-mark"><span class="plate-no">09</span></div>
+          <div class="doc-mark"><span class="plate-no">10</span></div>
           <div class="doc-body">
             <h2>What is not here.</h2>
             <p>

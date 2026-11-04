@@ -89,7 +89,18 @@ pub fn Registry::register(
     Some(u) => check_unit(u)
     None => ()
   }
-  let full = apply_unit(self.full_name(name), unit)
+  let kind = metric.kind()
+  if unit is Some(_) && kind is (Info | StateSet) {
+    raise Refused("a metric of this kind cannot have a unit: " + name)
+  }
+  // A counter's samples get `_total` when written, so a name that already says it is munged the
+  // way client_python munges it, or it would come out twice.
+  let named = self.full_name(name)
+  let family = match (kind, named.strip_suffix("_total")) {
+    (Counter, Some(stem)) => stem.to_owned()
+    _ => named
+  }
+  let full = apply_unit(family, unit)
   if !is_valid_metric_name(full) {
     raise Refused("invalid metric name: " + full)
   }

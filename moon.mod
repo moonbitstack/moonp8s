@@ -34,4 +34,7 @@ source = "src"
 
 import {
   "moonbitstack/moonasgi@0.10.5",
+  "moonbitstack/moonast@0.2.6",
+  "moonbitlang/parser@0.4.6",
+  "moonbitlang/async@0.22.5",
 }
