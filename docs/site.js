@@ -228,36 +228,64 @@ for (const button of $$("[data-copy]")) {
 
 // How many names live under each package, counted from the page itself: the
 // generator emits entries, not totals, so there is no second number to keep true.
-for (const node of $$("[data-count-for]")) {
-  const package_ = document.getElementById(node.dataset.countFor);
-  if (package_) {
-    const tops = package_.querySelectorAll(".api-entry[data-name]");
-    let count = 0;
-    for (const top of tops) {
+// A method is an `.api-entry` too — it is counted once, as the method it is, and
+// never again as a child of the type that owns it. The package figures and the
+// page total therefore add up, which is the first thing a reader checks.
+const apiPackages = $$("[data-count-for]")
+  .map((node) => ({
+    node,
+    package_: document.getElementById(node.dataset.countFor),
+  }))
+  .filter((entry) => entry.package_);
+
+function countEntries(package_, query) {
+  let count = 0;
+  for (const top of package_.querySelectorAll(
+    ".api-group > .api-entry[data-name]",
+  )) {
+    const own = !query || top.dataset.name.toLowerCase().includes(query);
+    if (own) {
+      // The type matches: it is shown, and so is every method under it.
       count += 1 + top.querySelectorAll(".api-method[data-name]").length;
+      continue;
     }
-    node.textContent = String(count);
+    for (const method of top.querySelectorAll(".api-method[data-name]")) {
+      if (method.dataset.name.toLowerCase().includes(query)) count += 1;
+    }
+  }
+  return count;
+}
+
+function countAll(query) {
+  return apiPackages.reduce(
+    (sum, entry) => sum + countEntries(entry.package_, query),
+    0,
+  );
+}
+
+function showCounts(shown) {
+  for (const entry of apiPackages) {
+    entry.node.textContent = String(countEntries(entry.package_, ""));
+  }
+  if (shown !== undefined) {
+    for (const node of $$("#api-count-shown")) node.textContent = String(shown);
   }
 }
 
+const apiTotal = countAll("");
+for (const node of $$("#api-count")) node.textContent = String(apiTotal);
+showCounts(apiTotal);
+
 // Type a few letters and the reference narrows to what matches. A method that
-// matches keeps its type visible, because a signature without its type is a riddle.
+// matches keeps its type visible, because a signature without its type is a riddle;
+// the table of contents follows the filter, so its figures still sum to "shown".
 const filter = $("#api-filter");
 if (filter) {
   const tops = $$(".api-group > .api-entry[data-name]");
-  const counter = $("#api-count");
   const empty = $("#api-empty");
-  const total = tops.reduce(
-    (sum, top) => sum + 1 + top.querySelectorAll(".api-method[data-name]").length,
-    0,
-  );
-  if (counter) counter.textContent = String(total);
-  const shownNode = $("#api-count-shown");
-  if (shownNode) shownNode.textContent = String(total);
 
   const apply = () => {
     const query = filter.value.trim().toLowerCase();
-    let shown = 0;
     for (const top of tops) {
       const own = !query || top.dataset.name.toLowerCase().includes(query);
       let any = own;
@@ -267,13 +295,15 @@ if (filter) {
         if (hit) any = true;
       }
       top.hidden = !any;
-      if (any) shown += (own ? 1 : 0) + top.querySelectorAll(".api-method:not([hidden])").length;
     }
     for (const group of $$(".api-group")) {
       group.hidden = !group.querySelector(".api-entry[data-name]:not([hidden])");
     }
-    if (counter) counter.textContent = String(shown);
-    if (shownNode) shownNode.textContent = String(shown);
+    const shown = countAll(query);
+    for (const entry of apiPackages) {
+      entry.node.textContent = String(countEntries(entry.package_, query));
+    }
+    for (const node of $$("#api-count-shown")) node.textContent = String(shown);
     if (empty) empty.hidden = shown !== 0;
   };
 
