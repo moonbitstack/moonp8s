@@ -86,18 +86,27 @@ html {
     width: 0;
     height: 0;
   }
-  pre::-webkit-scrollbar {
+  pre::-webkit-scrollbar,
+  #expo-input::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  pre::-webkit-scrollbar-track {
+  pre::-webkit-scrollbar-track,
+  #expo-input::-webkit-scrollbar-track {
     background: transparent;
   }
-  pre::-webkit-scrollbar-thumb {
+  pre::-webkit-scrollbar-thumb,
+  #expo-input::-webkit-scrollbar-thumb {
     background: var(--rule-strong);
     border-radius: 99px;
   }
-  pre:hover::-webkit-scrollbar-thumb {
+  pre::-webkit-scrollbar-corner,
+  #expo-input::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  pre:hover::-webkit-scrollbar-thumb,
+  #expo-input:hover::-webkit-scrollbar-thumb,
+  #expo-input:focus::-webkit-scrollbar-thumb {
     background: var(--ink-faint);
   }
 }
@@ -106,7 +115,8 @@ html {
   html {
     scrollbar-width: none;
   }
-  pre {
+  pre,
+  #expo-input {
     scrollbar-width: thin;
     scrollbar-color: var(--rule-strong) transparent;
   }
@@ -150,7 +160,14 @@ body {
 .marginalia,
 .facts,
 .lab-hint,
-.lab-send {
+.lab-send,
+.doc-toc,
+.api-toc,
+.api-count,
+.api-hint,
+.api-filter-wrap label,
+.presets,
+.stops {
   -webkit-user-select: none;
   user-select: none;
 }
@@ -2148,7 +2165,7 @@ kbd {
   line-height: 1.75;
   color: var(--ink);
   outline: none;
-  resize: vertical;
+  resize: none;
   transition: border-color 160ms ease;
 }
 
@@ -2584,8 +2601,8 @@ kbd {
     gap: 0 8px;
   }
   .row-labels span {
-    font-size: 6.5px;
-    padding-right: 5px;
+    font-size: 7.5px;
+    padding-right: 6px;
   }
   .cell i {
     height: 5px;
@@ -2690,6 +2707,22 @@ kbd {
 }
 
 @media (width <= 640px) {
+  /* Fifteen labels have to stay readable in a field that still holds fifteen rows:
+     the sizes come down, but not to a hairline. */
+  .row-labels span {
+    font-size: 8px;
+    letter-spacing: -0.01em;
+  }
+  .field {
+    grid-template-columns: 48px minmax(0, 1fr) 64px;
+  }
+  .field-axis {
+    grid-template-columns: 48px minmax(0, 1fr) 64px;
+  }
+  .budget-rule {
+    left: 48px;
+    right: calc(64px + 8px);
+  }
   .display {
     font-size: clamp(42px, 14vw, 72px);
   }
