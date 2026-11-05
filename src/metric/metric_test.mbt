@@ -347,3 +347,101 @@ test "a scrape stamps the samples that carry no time of their own" {
     None => abort("a dated sample lost its date")
   }
 }
+
+///|
+test "a counter refuses NaN, which would stop it being a total" {
+  let counter = @metric.Counter::new()
+  let nan = 0.0 / 0.0
+  assert_true(refused(fn() raise @metric.Refused { counter.inc(by=nan) }))
+  assert_true(counter.get() == 0.0)
+}
+
+///|
+test "a counter reset without a new creation time forgets the old one" {
+  let counter = @metric.Counter::new(created=1700000000.0)
+  counter.inc(by=2.0)
+  counter.reset()
+  assert_true(counter.get() == 0.0)
+  assert_true(counter.points()[0].created is None)
+}
+
+///|
+test "a histogram refuses a bound it cannot carry a sum for" {
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.Histogram::new(buckets=[-1.0, 1.0]))
+    }),
+  )
+}
+
+///|
+test "a family refuses a label name the sample already spends" {
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(
+        @metric.Family::new(["le"], fn() raise @metric.Refused {
+          @metric.Histogram::new()
+        }),
+      )
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(
+        @metric.Family::new(["quantile"], fn() raise @metric.Refused {
+          @metric.Summary::new()
+        }),
+      )
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.Family::new(["a", "a"], fn() { @metric.Counter::new() }))
+    }),
+  )
+  // The same name is fine for a kind that does not spend it.
+  ignore(@metric.Family::new(["le"], fn() { @metric.Counter::new() })) catch {
+    @metric.Refused(message) => abort(message)
+  }
+}
+
+///|
+test "a name that would collide with another family's sample is refused" {
+  let registry = @metric.Registry::new()
+  let orders = registry.counter("orders", "Orders.")
+  orders.inc()
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(registry.gauge("orders_total", "Not a counter."))
+    }),
+  )
+  let latency = registry.histogram("latency", "Latency.")
+  latency.observe(0.1)
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(registry.gauge("latency_count", "Counts, but a gauge."))
+    }),
+  )
+  // A name that only looks similar is fine: `latency_seconds` is nobody's sample.
+  ignore(registry.gauge("latency_seconds", "Seconds.")) catch {
+    @metric.Refused(message) => abort(message)
+  }
+}
+
+///|
+test "a summary with no observations answers NaN, not zero" {
+  let summary = @metric.Summary::new(quantiles=[(0.5, 0.01)])
+  match summary.snapshot().value {
+    @metric.Value::Quantiles(quantiles~, ..) => {
+      assert_eq(quantiles.length(), 1)
+      assert_true(quantiles[0].1 != quantiles[0].1)
+    }
+    _ => abort("not quantiles")
+  }
+  summary.observe(4.0)
+  match summary.snapshot().value {
+    @metric.Value::Quantiles(quantiles~, ..) =>
+      assert_true(quantiles[0].1 == 4.0)
+    _ => abort("not quantiles")
+  }
+}

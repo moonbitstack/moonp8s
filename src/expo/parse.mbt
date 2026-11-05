@@ -67,8 +67,17 @@ fn Cursor::take_until(self : Cursor, stop : (Char) -> Bool) -> String {
 
 ///|
 fn parse_float(s : String) -> Double? {
-  Some(@string.parse_double(s.trim())) catch {
-    _ => None
+  let text = s.trim()
+  // The three values every exposition may carry by name. `parse_double` reads
+  // decimals only, and a parser that refused these would fail a conformant
+  // exposition.
+  match text {
+    "NaN" | "nan" | "NAN" => Some(0.0 / 0.0)
+    "+Inf" | "Inf" | "inf" | "+inf" | "INF" | "infinity" | "Infinity" =>
+      Some(1.0 / 0.0)
+    "-Inf" | "-inf" | "-INF" | "-infinity" | "-Infinity" =>
+      Some(0.0 - 1.0 / 0.0)
+    _ => Some(@string.parse_double(text)) catch { _ => None }
   }
 }
 

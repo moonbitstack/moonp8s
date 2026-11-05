@@ -42,6 +42,11 @@ fn check_buckets(bounds : Array[Double]) -> Unit raise Refused {
     if b == inf || b == 0.0 - inf {
       raise Refused("bucket bounds must be finite")
     }
+    // A histogram with a negative bound must not carry a sum, and this model
+    // always carries one.
+    if b < 0.0 {
+      raise Refused("bucket bounds must not be negative, got " + b.to_string())
+    }
     if !first && b <= prev {
       raise Refused("bucket bounds must be strictly increasing")
     }

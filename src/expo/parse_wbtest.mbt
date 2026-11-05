@@ -81,3 +81,35 @@ test "malformed input is refused" {
   }
   assert_true(refused)
 }
+
+///|
+test "the three named values parse in both formats" {
+  let document = "# TYPE probe gauge\nprobe{a=\"one\"} NaN\nprobe{a=\"two\"} +Inf\nprobe{a=\"three\"} -Inf\n"
+  for format in [Format::Text004, Format::OpenMetrics100] {
+    let families = parse(document, format~) catch {
+      @metric.Refused(message) => abort(message)
+    }
+    let values = families[0].metrics.map(fn(point) {
+      match point.value {
+        @metric.Value::Number(v) => v
+        _ => abort("not a number")
+      }
+    })
+    assert_true(values[0] != values[0])
+    assert_true(values[1] > 0.0 && values[1] == 1.0 / 0.0)
+    assert_true(values[2] < 0.0 && values[2] == 0.0 - 1.0 / 0.0)
+  }
+}
+
+///|
+test "an exemplar with no labels is written as an empty label set" {
+  let families = try {
+    let registry = @metric.Registry::new()
+    let counter = registry.counter("hit", "Hit.")
+    counter.inc(exemplar=@metric.Exemplar::new([], 1.0))
+    registry.collect()
+  } catch {
+    @metric.Refused(message) => abort(message)
+  }
+  assert_true(openmetrics(families).contains("hit_total 1.0 # {} 1.0"))
+}

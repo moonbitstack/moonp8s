@@ -28,6 +28,10 @@ pub struct Registry {
   priv labels : Array[(String, String)]
   priv entries : Array[Entry]
   priv seen : Map[String, Unit]
+  /// Every sample name already spent, mapped to the family that spends it. A
+  /// gauge called `orders_total` next to a counter called `orders` would write
+  /// two different series under one name, so the second registration is refused.
+  priv taken : Map[String, String]
   priv collectors : Array[&Collector]
 }
 
@@ -46,7 +50,14 @@ pub fn Registry::new(
   for pair in labels {
     check_label_name(pair.0)
   }
-  { prefix, labels, entries: [], seen: Map([]), collectors: [], }
+  {
+    prefix,
+    labels,
+    entries: [],
+    seen: Map([]),
+    taken: Map([]),
+    collectors: [],
+  }
 }
 
 ///|
@@ -71,6 +82,23 @@ fn apply_unit(name : String, unit : String?) -> String {
       }
     }
     None => name
+  }
+}
+
+///|
+/// The sample names a family of this kind writes in the text formats. Two
+/// families whose sample names overlap would produce an exposition in which one
+/// series name appears twice.
+fn sample_names(name : String, kind : Kind) -> Array[String] {
+  match kind {
+    Kind::Counter => [name + "_total", name + "_created"]
+    Kind::Info => [name + "_info"]
+    Kind::Histogram =>
+      [name + "_bucket", name + "_count", name + "_sum", name + "_created"]
+    Kind::GaugeHistogram =>
+      [name + "_bucket", name + "_gcount", name + "_gsum", name + "_created"]
+    Kind::Summary => [name, name + "_count", name + "_sum", name + "_created"]
+    _ => [name]
   }
 }
 
@@ -108,7 +136,41 @@ pub fn Registry::register(
     Some(_) => raise Refused("metric already registered: " + full)
     None => ()
   }
+  match self.taken.get(full) {
+    Some(owner) =>
+      raise Refused(
+        full +
+        " is already the sample of " +
+        owner +
+        ", so another family cannot take the name",
+      )
+    None => ()
+  }
+  for sample in sample_names(full, kind) {
+    match self.seen.get(sample) {
+      Some(_) =>
+        raise Refused(
+          "metric " + sample + " would share a sample name with " + full,
+        )
+      None => ()
+    }
+    match self.taken.get(sample) {
+      Some(owner) =>
+        raise Refused(
+          full +
+          " would write " +
+          sample +
+          ", which is already " +
+          owner +
+          "'s sample",
+        )
+      None => ()
+    }
+  }
   self.seen[full] = ()
+  for sample in sample_names(full, kind) {
+    self.taken[sample] = full
+  }
   self.entries.push({ name: full, help, unit, metric, })
 }
 
@@ -180,6 +242,7 @@ pub fn Registry::sub(
     labels: self.labels + extra,
     entries: [],
     seen: Map([]),
+    taken: Map([]),
     collectors: [],
   }
 }

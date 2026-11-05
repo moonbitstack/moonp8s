@@ -143,7 +143,14 @@ pub fn Summary::observe(self : Summary, v : Double) -> Unit {
 /// configured), the sum, and the count.
 pub fn Summary::snapshot(self : Summary) -> Point {
   let quantiles : Array[(Double, Double)] = match self.sketch {
-    Some(g) => self.targets.map(fn(pair) { (pair.0, g.query(pair.0)) })
+    // With no observations there is no quantile to report; the specification
+    // asks for NaN rather than a zero that would read as a measurement.
+    Some(g) =>
+      if self.count == 0L {
+        self.targets.map(fn(pair) { (pair.0, 0.0 / 0.0) })
+      } else {
+        self.targets.map(fn(pair) { (pair.0, g.query(pair.0)) })
+      }
     None => []
   }
   {

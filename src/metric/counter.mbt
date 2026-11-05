@@ -36,6 +36,9 @@ pub fn Counter::inc(
   if by < 0.0 {
     raise Refused("counter can only increase, got " + by.to_string())
   }
+  if by != by {
+    raise Refused("a counter cannot hold NaN: it would stop being a total")
+  }
   self.accrue(by)
   match exemplar {
     Some(e) => self.exemplar = Some(e)
@@ -52,12 +55,13 @@ fn Counter::accrue(self : Counter, by : Double) -> Unit {
 /// Restart the counter at zero, optionally dating the reset as a new creation
 /// time. Use this when a logical process restarts without restarting the
 /// program.
+///
+/// A reset is a new series, so the creation time is the reset's: passing none
+/// clears it rather than leaving the old one in place, which would claim the
+/// restarted counter started when the old one did.
 pub fn Counter::reset(self : Counter, created? : Double) -> Unit {
   self.value = 0.0
-  match created {
-    Some(c) => self.created = Some(c)
-    None => ()
-  }
+  self.created = created
 }
 
 ///|

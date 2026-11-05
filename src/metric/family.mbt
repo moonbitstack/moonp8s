@@ -44,7 +44,30 @@ pub fn[M : Metric] Family::new(
   make : () -> M raise Refused,
 ) -> Family[M] raise Refused {
   let probe = make()
-  { names, make, children: Map([]), cached_kind: Some(Metric::kind(probe)), }
+  let kind = Metric::kind(probe)
+  // These names are spent by the rendered sample: a histogram writes `le`, a
+  // summary writes `quantile`, and a second label of that name would make the
+  // line unreadable. Refused here, where the family's labels are decided.
+  for i = 0; i < names.length(); i = i + 1 {
+    check_label_name(names[i])
+    for j = i + 1; j < names.length(); j = j + 1 {
+      if names[i] == names[j] {
+        raise Refused("a label name appears twice: " + names[i])
+      }
+    }
+    match kind {
+      Kind::Histogram | Kind::GaugeHistogram =>
+        if names[i] == "le" {
+          raise Refused("a histogram cannot have a label named le")
+        }
+      Kind::Summary =>
+        if names[i] == "quantile" {
+          raise Refused("a summary cannot have a label named quantile")
+        }
+      _ => ()
+    }
+  }
+  { names, make, children: Map([]), cached_kind: Some(kind), }
 }
 
 ///|

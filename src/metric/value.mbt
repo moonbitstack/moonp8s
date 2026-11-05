@@ -25,7 +25,9 @@ pub fn Exemplar::new(
 ) -> Exemplar raise Refused {
   let mut total = 0
   for pair in labels {
-    total = total + pair.0.length() + pair.1.length()
+    // Code points, not code units: an emoji in a trace id is one character to
+    // the specification, two to a UTF-16 string.
+    total = total + pair.0.char_length() + pair.1.char_length()
   }
   if total > exemplar_label_limit {
     raise Refused(

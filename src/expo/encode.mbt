@@ -47,12 +47,14 @@ fn render_labels(labels : Array[(String, String)]) -> String {
 
 ///|
 fn exemplar_text(ex : @metric.Exemplar) -> String {
-  if ex.labels.length() == 0 {
-    return ""
-  }
   let sb = StringBuilder()
   sb.write_string(" # ")
-  sb.write_string(render_labels(ex.labels))
+  // An exemplar without labels still has to be written, as an empty LabelSet.
+  if ex.labels.length() == 0 {
+    sb.write_string("{}")
+  } else {
+    sb.write_string(render_labels(ex.labels))
+  }
   sb.write_char(' ')
   sb.write_string(format_float(ex.value))
   match ex.timestamp {
