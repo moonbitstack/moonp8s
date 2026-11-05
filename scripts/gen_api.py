@@ -29,7 +29,17 @@ from dataclasses import dataclass, field
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TARGET = ROOT / "docs" / "api.html"
-PACKAGES = ("metric", "expo", "push", "asgi", "compat")
+# Page section -> package directory. The directory package is a child of multiproc,
+# so it carries a slug of its own rather than a path in every anchor.
+PACKAGES = {
+    "metric": "metric",
+    "expo": "expo",
+    "push": "push",
+    "asgi": "asgi",
+    "compat": "compat",
+    "multiproc": "multiproc",
+    "multiproc-directory": "multiproc/directory",
+}
 
 # Methods every type with a derive or an implementation has, in no useful order.
 NOISE = {"equal", "not_equal", "to_repr", "to_string", "output", "compare", "hash"}
@@ -635,8 +645,8 @@ def main() -> int:
     page = TARGET.read_text(encoding="utf-8")
     parsed = {
         package: parse_mbti(
-            ROOT / "src" / package / "pkg.generated.mbti",
-            collect_docs(ROOT / "src" / package),
+            ROOT / "src" / PACKAGES[package] / "pkg.generated.mbti",
+            collect_docs(ROOT / "src" / PACKAGES[package]),
         )
         for package in PACKAGES
     }
@@ -662,7 +672,9 @@ def main() -> int:
     for package in PACKAGES:
         body = build_package(parsed[package], package, anchors)
         missing = missing_names(parsed[package], body)
-        for name in surface_names(ROOT / "src" / package / "pkg.generated.mbti"):
+        for name in surface_names(
+            ROOT / "src" / PACKAGES[package] / "pkg.generated.mbti"
+        ):
             short = name.split("::")[-1]
             if name not in body and short not in body and name not in missing:
                 missing.append(name)

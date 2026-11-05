@@ -72,13 +72,13 @@
           <span class="marginalia page-kicker">Guide</span>
           <h1 class="page-title">From nothing<br />to <em>a scrape.</em></h1>
           <p class="page-lede">
-            Nine steps, in the order a service needs them. Every fragment below is
+            Ten steps, in the order a service needs them. Every fragment below is
             the real signature; every output is what this library wrote when the
             code was run.
           </p>
           <dl class="page-facts">
-            <div><dt>Steps</dt><dd>nine</dd></div>
-            <div><dt>Packages</dt><dd>metric · expo · push · asgi</dd></div>
+            <div><dt>Steps</dt><dd>ten</dd></div>
+            <div><dt>Packages</dt><dd>metric · expo · push · asgi · multiproc</dd></div>
             <div><dt>Clock</dt><dd>handed in</dd></div>
           </dl>
         </section>
@@ -91,9 +91,10 @@
           <a href="#histogram"><span>05</span>a histogram</a>
           <a href="#exposition"><span>06</span>the exposition</a>
           <a href="#scrape"><span>07</span>the scrape</a>
-          <a href="#rate"><span>08</span>rate</a>
-          <a href="#limits"><span>09</span>limits</a>
-          <a href="#not-here"><span>10</span>not here</a>
+          <a href="#several"><span>08</span>several processes</a>
+          <a href="#rate"><span>09</span>rate</a>
+          <a href="#limits"><span>10</span>limits</a>
+          <a href="#not-here"><span>11</span>not here</a>
         </nav>
 
         <section class="doc-section" id="install" data-ruler-section="install">
@@ -118,7 +119,7 @@
           <aside class="doc-aside">
             <b>Why a facade at all</b>
             <p>
-              So one import reaches the five packages for reading code, while writing
+              So one import reaches the six packages for reading code, while writing
               code still names the package it depends on.
             </p>
           </aside>
@@ -336,8 +337,55 @@ request_duration_seconds_sum 0.358 1.700000015e+09
           </aside>
         </section>
 
-        <section class="doc-section" id="rate" data-ruler-section="rate">
+        <section class="doc-section" id="several" data-ruler-section="several processes">
           <div class="doc-mark"><span class="plate-no">08</span></div>
+          <div class="doc-body">
+            <h2>Several processes.</h2>
+            <p>
+              A worker pool multiplies every number by the number of workers. Each
+              process writes what it has counted to its own file in one directory,
+              and the process that answers <code>/metrics</code> reads the directory.
+              Nothing is locked, nothing is shared, and a scrape never waits for a
+              worker that is busy.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="c">// in each worker, after a batch</span>
+<span class="a">@directory.write</span>(dir, pid, registry.<span class="a">collect</span>(),
+  modes=[(<span class="s">"queue_depth"</span>, <span class="a">@multiproc.Mode::Sum</span>)],
+)
+
+<span class="c">// in the process that answers the scrape</span>
+<span class="k">let</span> families = <span class="a">@directory.collect</span>(dir)
+<span class="a">@expo.text</span>(families)</code></pre>
+            <p>
+              Counters, histograms and summaries add up across processes. A gauge
+              does not, so it has to be told what to do: <code>Mode::Sum</code> adds
+              the processes' values, <code>Min</code> and <code>Max</code> take an
+              edge, <code>MostRecent</code> keeps the value written last, and the
+              default, <code>Mode::All</code>, keeps the processes apart with a
+              <code>pid</code> label on each series.
+            </p>
+            <p>
+              A flush is idempotent: the files hold totals since the process started,
+              not deltas, so flushing twice is flushing once. Each file is written
+              beside its final name and renamed into place, so a scrape reads a whole
+              file or the previous one.
+            </p>
+          </div>
+          <aside class="doc-aside">
+            <b>The live spellings</b>
+            <p>
+              A mode that starts with <code>Live</code> aggregates the same way at a
+              scrape. It decides what happens afterwards: <code>mark_dead(dir,
+              pid)</code> deletes the files of the live modes and leaves the others,
+              which is how a gauge forgets a worker instead of keeping its last value
+              forever.
+            </p>
+          </aside>
+        </section>
+
+        <section class="doc-section" id="rate" data-ruler-section="rate">
+          <div class="doc-mark"><span class="plate-no">09</span></div>
           <div class="doc-body">
             <h2>Rate is arithmetic, not an API.</h2>
             <p>
@@ -367,7 +415,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="limits" data-ruler-section="limits">
-          <div class="doc-mark"><span class="plate-no">09</span></div>
+          <div class="doc-mark"><span class="plate-no">10</span></div>
           <div class="doc-body">
             <h2>What it refuses.</h2>
             <p>
@@ -400,7 +448,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
         </section>
 
         <section class="doc-section" id="not-here" data-ruler-section="not here">
-          <div class="doc-mark"><span class="plate-no">10</span></div>
+          <div class="doc-mark"><span class="plate-no">11</span></div>
           <div class="doc-body">
             <h2>What is not here.</h2>
             <p>
@@ -413,8 +461,9 @@ request_duration_seconds_sum 0.358 1.700000015e+09
                 exposition is a different transport, and it is not promised here.
               </li>
               <li>
-                <b>No multiprocess aggregation.</b> One process, one registry. If you
-                need several, aggregate before you observe.
+                <b>No multiprocess directory on wasm.</b> The merge is portable, but
+                reading and writing a worker's file is a native package: the
+                browser has no directory to put it in.
               </li>
               <li>
                 <b>No process metrics read for you.</b> <code>ProcessCollector</code>
@@ -436,7 +485,7 @@ request_duration_seconds_sum 0.358 1.700000015e+09
           <aside class="doc-aside">
             <b>Where to go next</b>
             <p>
-              <a href="examples.html">Examples</a> runs four complete programs.
+              <a href="examples.html">Examples</a> runs five complete programs.
               <a href="api.html">The reference</a> lists every public name.
             </p>
           </aside>

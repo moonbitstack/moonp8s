@@ -112,14 +112,15 @@
             <a href="#plate-2"><span>02</span>the exposition</a>
             <a href="#plate-3"><span>03</span>the aggregation</a>
             <a href="#plate-4"><span>04</span>the seams</a>
-            <a href="#plate-5"><span>05</span>the index</a>
+            <a href="#plate-5"><span>05</span>the several</a>
+            <a href="#plate-6"><span>06</span>the index</a>
           </nav>
         </div>
       </header>
 
       <section class="plate" id="plate-2" data-ruler-section="the exposition">
         <div class="plate-head">
-          <span class="plate-no">02 / 05</span>
+          <span class="plate-no">02 / 06</span>
           <h2>Everything a scrape reads is one line.</h2>
           <p class="note">
             A name, its labels in braces, a number and the instant it was read. The
@@ -201,7 +202,7 @@
 
       <section class="plate" id="plate-3" data-ruler-section="the aggregation">
         <div class="plate-head">
-          <span class="plate-no">03 / 05</span>
+          <span class="plate-no">03 / 06</span>
           <h2>The edges decide the answer.</h2>
           <p class="note">
             The same 1,027 samples, cut three ways. The count, the sum and the rate do
@@ -240,7 +241,7 @@
 
       <section class="plate" id="plate-4" data-ruler-section="the seams">
         <div class="plate-head">
-          <span class="plate-no">04 / 05</span>
+          <span class="plate-no">04 / 06</span>
           <h2>Three things this library will not decide for you.</h2>
           <p class="note">
             When a scrape happens, what is allowed to take a name, and which format
@@ -297,12 +298,69 @@
         </div>
       </section>
 
-      <section class="plate" id="plate-5" data-ruler-section="the index">
+
+      <section class="plate" id="plate-5" data-ruler-section="the several">
         <div class="plate-head">
-          <span class="plate-no">05 / 05</span>
+          <span class="plate-no">05 / 06</span>
+          <h2>Four processes, four files, one answer.</h2>
+          <p class="note">
+            A pool of workers each counts what it saw. No worker reads another's
+            memory, and the scrape does not wait for any of them: it reads the
+            directory and adds up what is there. Everything the merge has to decide
+            is decided by a name — of a file, of a mode.
+          </p>
+        </div>
+        <div class="plate-body seams">
+          <div class="seam">
+            <h3>The file</h3>
+            <p>
+              A worker writes its totals where the scrape can find them, one file
+              per kind, named after its process. A file is written beside its final
+              name and renamed into place, so a scrape never reads half of one.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="a">@directory.write</span>(
+  dir, pid, registry.<span class="a">collect</span>(),
+)
+<span class="c">// counter_7.db · histogram_7.db
+// gauge_sum_7.db · summary_7.db</span></code></pre>
+          </div>
+          <div class="seam">
+            <h3>The mode</h3>
+            <p>
+              A counter adds up, and so does a bucket. A gauge does not: three
+              workers' queue depths are three answers to one question, and which
+              answer is wanted is the caller's to say — the scrape cannot know.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="a">@directory.write</span>(
+  dir, pid, families,
+  modes=[(<span class="s">"queue_depth"</span>, <span class="a">@multiproc.Mode::Sum</span>)],
+)
+<span class="c">// all · min · max · sum · mostrecent
+// each with a live spelling beside it</span></code></pre>
+          </div>
+          <div class="seam">
+            <h3>The last one out</h3>
+            <p>
+              A live gauge describes a process that is running now, so when the
+              supervisor says the process is gone, the file goes with it. A counter
+              stays: what the process counted is still true after it exits.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="a">@directory.mark_dead</span>(dir, pid)
+<span class="c">// gauge_livesum_7.db removed
+// counter_7.db and its totals stay</span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="plate" id="plate-6" data-ruler-section="the index">
+        <div class="plate-head">
+          <span class="plate-no">06 / 06</span>
           <h2>The index.</h2>
           <p class="note">
-            Five packages and a facade. Import the package that owns the type you
+            Seven packages and a facade. Import the package that owns the type you
             construct: a re-exported type arrives without its constructors. The
             complete reference, down to the last derived method, is on
             <a href="api.html">the API plate</a>.
@@ -350,6 +408,16 @@
             <h3>asgi — the handler and the middleware</h3>
             <div class="index-row"><span class="name">app</span><span class="leader"></span><span class="sig">(Registry) → (Request) → Response</span></div>
             <div class="index-row"><span class="name">middleware</span><span class="leader"></span><span class="sig">(Registry, now?) → a wrapper for a handler</span></div>
+          </div>
+
+          <div class="index-group">
+            <h3>multiproc — several processes, one set of numbers</h3>
+            <div class="index-row"><span class="name">Mode</span><span class="leader"></span><span class="sig">all · liveall · min · max · sum · mostrecent, and their live forms</span></div>
+            <div class="index-row"><span class="name">merge</span><span class="leader"></span><span class="sig">(Array[Part]) → Array[MetricFamily] · what a scrape does</span></div>
+            <div class="index-row"><span class="name">Part, Entry</span><span class="leader"></span><span class="sig">one worker's file, one value in it</span></div>
+            <div class="index-row"><span class="name">directory.write</span><span class="leader"></span><span class="sig">(dir, pid, families, modes?) → Written · a worker's flush</span></div>
+            <div class="index-row"><span class="name">directory.collect</span><span class="leader"></span><span class="sig">(dir, at?) → Array[MetricFamily] · the scrape, native only</span></div>
+            <div class="index-row"><span class="name">directory.mark_dead</span><span class="leader"></span><span class="sig">(dir, pid) → Int · the live gauges of a process that exited</span></div>
           </div>
 
           <div class="index-group">

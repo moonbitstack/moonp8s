@@ -49,7 +49,7 @@
       <header class="topline">
         <span class="brand">
           <a class="wordmark" href="./">moonp8s</a>
-          <span class="marginalia wide-only">Examples · four programs, run</span>
+          <span class="marginalia wide-only">Examples · five programs, run</span>
           <span class="marginalia narrow-only">Examples</span>
         </span>
         <nav class="nav" aria-label="Sections">
@@ -77,7 +77,7 @@
             might print.
           </p>
           <dl class="page-facts">
-            <div><dt>Programs</dt><dd>four</dd></div>
+            <div><dt>Programs</dt><dd>five</dd></div>
             <div><dt>Output</dt><dd>captured, not written</dd></div>
             <div><dt>Run</dt><dd>moon run src/examples/…</dd></div>
           </dl>
@@ -263,6 +263,67 @@ request_duration_seconds_sum 0.358 1.700000015e+09
                 Same three numbers, twice. The first format counts in milliseconds and
                 says nothing at the end; the second counts in seconds and closes with
                 <code># EOF</code>, which is how a reader knows the body is whole.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section class="example" id="multiprocess" data-ruler-section="several processes">
+          <div class="example-head">
+            <span class="plate-no">05</span>
+            <h2>Three workers.</h2>
+            <p class="path">src/examples/09-multiprocess/main.mbt</p>
+            <p class="run">moon run src/examples/09-multiprocess</p>
+          </div>
+          <div class="example-body">
+            <div class="listing">
+              <!-- nocheck: an excerpt of the file -->
+              <pre><code><span class="c">///|
+/// The work one worker did. The numbers differ per process so the merge has
+/// something to add up.</span>
+<span class="k">fn</span> registry_for(pid : Int) -&gt; <span class="a">@metric.Registry</span> <span class="k">raise</span> <span class="a">@metric.Refused</span> {
+  <span class="k">let</span> registry = <span class="a">@metric.Registry</span>::new(
+    prefix=<span class="s">"p8s"</span>,
+    labels=[(<span class="s">"service"</span>, <span class="s">"checkout"</span>)],
+  )
+  <span class="k">let</span> orders = registry.<span class="a">counter</span>(<span class="s">"orders"</span>, <span class="s">"Orders placed."</span>)
+  <span class="c">// ... a labelled counter, a histogram, a summary, a gauge</span>
+  orders.<span class="a">inc</span>(by=(pid * 10).to_double())
+  registry
+}
+
+<span class="c">///|</span>
+<span class="k">async fn</span> flush(dir : String, pid : Int) -&gt; Unit <span class="k">raise</span> <span class="a">@metric.Refused</span> {
+  <span class="k">let</span> registry = <span class="a">registry_for</span>(pid)
+  <span class="k">let</span> written = <span class="a">@directory.write</span>(
+    dir, pid, registry.<span class="a">collect</span>(),
+    modes=[(<span class="s">"p8s_queue_depth"</span>, <span class="a">@multiproc.Mode::Sum</span>)],
+  )
+  println(<span class="s">"worker "</span> + pid.to_string() + <span class="s">": "</span>
+    + written.files.to_string() + <span class="s">" files"</span>)
+}</code></pre>
+            </div>
+            <div class="example-side">
+              <h3>output · three files each, then one scrape</h3>
+              <div class="output">worker 1: 4 files, 12 values
+worker 2: 4 files, 12 values
+worker 3: 4 files, 12 values
+
+# HELP p8s_orders_total Orders placed, by response code.
+# TYPE p8s_orders_total counter
+p8s_orders_total{service="checkout"} 60.0
+# HELP p8s_queue_depth Jobs waiting in this worker.
+# TYPE p8s_queue_depth gauge
+p8s_queue_depth{service="checkout"} 18.0
+# HELP p8s_request_seconds Seconds a request took.
+# TYPE p8s_request_seconds histogram
+p8s_request_seconds_bucket{le="+Inf",service="checkout"} 6.0
+p8s_request_seconds_count{service="checkout"} 6.0
+p8s_request_seconds_sum{service="checkout"} 1.1</div>
+              <p>
+                Ten orders, twenty, thirty: the counter adds them up. The queue depth
+                was three, six and nine, and <code>Mode::Sum</code> answers eighteen,
+                which is what the pool as a whole is holding. Six requests went
+                through three processes and the histogram kept one set of edges.
               </p>
             </div>
           </div>

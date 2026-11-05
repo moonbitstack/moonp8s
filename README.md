@@ -7,7 +7,7 @@ opens a socket and never reads a clock, so a scrape and a push stay something
 the caller schedules.
 
 The site is at **https://moonbitstack.github.io/moonp8s/** — a guide, the
-generated reference, a parser to try, and four runnable examples.
+generated reference, a parser to try, and five runnable examples.
 
 ## Install
 
@@ -94,7 +94,7 @@ let content_type = @moonp8s.Format::OpenMetrics100.content_type()
 
 | Type | Methods | Notes |
 |:--|:--|:--|
-| `Counter` | `inc(by~, exemplar?)`, `reset(created?)`, `get()` | Only increases; a negative step is refused. |
+| `Counter` | `inc(by~, exemplar?)`, `reset(created?)`, `get()` | Only increases; a negative step or NaN is refused. A reset dates the series anew, or forgets when it started. |
 | `Gauge` | `set(v, timestamp?)`, `inc(by~)`, `dec(by~)`, `set_function(f)`, `get()` | Pass the timestamp to date a sample; a function replaces the stored value. |
 | `Histogram` | `observe(v, exemplar?)`, `snapshot()` | Buckets from `buckets~`; `linear` and `exponential` build them. |
 | `GaugeHistogram` | `observe`, `snapshot()` | A gauge's sum and count over histogram buckets. |
@@ -170,6 +170,72 @@ let sub = registry.sub(prefix="http", labels=[("server", "a")])
 A custom source implements `Collector` and is added with `add`; the registry
 applies its prefix and constant labels to the families the collector returns.
 
+A name is refused when it would collide with a sample another family already writes: a
+gauge called `orders_total` next to a counter called `orders` would put two different
+series under one name, so the second registration is refused with the name it would
+have taken.
+
+## Several processes
+
+A worker pool counts the same metric once per worker. Each process writes what it has
+counted to its own file in one directory; the process that answers `/metrics` reads the
+directory and adds the files up. Nothing is shared, so a scrape never waits for a
+worker that is busy.
+
+<!-- nocheck -->
+```moonbit
+// moon.pkg: import { "moonbitstack/moonp8s/multiproc/directory" }
+let written = @directory.write(
+  dir,
+  7,
+  registry.collect(),
+  modes=[("queue_depth", @moonp8s.Mode::Sum)],
+)
+```
+
+`write` replaces this process's files. They hold the totals since the process started,
+not a delta, so flushing twice is flushing once; each file is written beside its final
+name and renamed into place, so a scrape reads a whole file or the previous one.
+
+The scrape side is one call:
+
+<!-- nocheck -->
+```moonbit
+let families = @directory.collect(dir, at=1_700_000_015.0)
+let body = @moonp8s.openmetrics(families)
+```
+
+Counters, histograms, and summaries add up across processes. A gauge does not, so its
+mode says what to do with the values from the other processes:
+
+| Mode | The series becomes |
+|:--|:--|
+| `Mode::All` (default) | one series per process, each labelled `pid` |
+| `Mode::Min`, `Mode::Max` | the smallest or the largest value |
+| `Mode::Sum` | the sum of the values |
+| `Mode::MostRecent` | the value written last; at equal timestamps the earlier file wins |
+
+Every mode also has a `Live` spelling — `LiveAll`, `LiveMin`, and so on — which
+aggregates the same way and changes what happens when the process exits:
+
+<!-- nocheck -->
+```moonbit
+@directory.mark_dead(dir, 7)
+```
+
+A live gauge describes a process that is running now, so its file goes when the
+supervisor says the process is gone. A counter's file stays: what the process counted
+is still true after it exits.
+
+A summary's quantiles are estimated from one process's samples and cannot be added up,
+so only its count and sum travel. An info metric and a state set are process-local and
+have no cross-process meaning; `write` names them in the result it returns rather than
+dropping them quietly.
+
+The files use the layout the official clients' multiprocess mode uses, which is what
+makes a directory portable: a worker written here can be read by them, and a directory
+they wrote can be read here.
+
 ## Exposition
 
 | Function | Result |
@@ -219,6 +285,33 @@ let wrapped = @moonp8s.middleware(registry)
 | `moonbitstack/moonp8s/expo` | Both text formats, their negotiation, and the parser. |
 | `moonbitstack/moonp8s/push` | Push gateway request construction. |
 | `moonbitstack/moonp8s/asgi` | The `/metrics` handler and the counting middleware. |
+| `moonbitstack/moonp8s/multiproc` | Gauge modes, a worker's file, and the merge. No I/O. |
+| `moonbitstack/moonp8s/multiproc/directory` | Writing and reading those files. Native only. |
+
+## Conformance
+
+The OpenMetrics 1.0 specification was read MUST by MUST; the verdict for each of the
+hundred is in the delivery notes for this version. Three are not met, and here is what
+each would cost:
+
+- **Negative observations.** A histogram or summary that records a negative value
+  carries a negative sum, which the specification forbids because a sum is a counter.
+  Both official clients accept negative observations and document the consequence, and
+  a temperature delta is a real thing to record; refusing them would move the problem
+  from the exposition to the caller's arithmetic.
+- **Reserved names.** Label names beginning with an underscore belong to the ingestor.
+  A registry here accepts them: `__name__` is the ingestor's to set, but a metric named
+  `_internal_total` is a naming mistake, not an unreadable exposition.
+- **Counts rendered as floats.** Counts and bucket values are integers in the model,
+  and written `17.0` rather than `17`, as every official client writes them. The
+  format's own grammar accepts both, and a reader must not reject either.
+
+The exposition formats themselves are checked by tooling rather than by reading:
+`promtool check metrics` lints the 0.0.4 output clean, a real Prometheus server scrapes
+both formats and the query results are compared with the values the workers recorded,
+and the multiprocess directory is exchanged with the official Python client in both
+directions, with the two renderings compared line for line — the two writers order the
+series of one family differently, and neither format gives series an order.
 
 ## Migration
 
