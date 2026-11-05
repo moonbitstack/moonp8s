@@ -28,7 +28,8 @@ jobs:
       - name: build the multiprocess example
         run: |
           moon build src/examples/09-multiprocess --target native
-          find _build/native -type f -name 09-multiprocess -perm -u+x | head -1 > /tmp/binary
+          # The native artifact keeps the .exe suffix on every platform.
+          find _build/native -type f -name '09-multiprocess*' | head -1 > /tmp/binary
           cat /tmp/binary
 
       - name: install prometheus
