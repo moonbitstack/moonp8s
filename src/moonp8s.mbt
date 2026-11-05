@@ -36,6 +36,12 @@ pub using @metric {
 pub using @expo {type Format, format_float, negotiate, openmetrics, text}
 
 ///|
+/// How several processes' values become one series, and the model of the files
+/// they leave behind. The directory these files live in is a native package of
+/// its own: `moonbitstack/moonp8s/multiproc/directory`.
+pub using @multiproc {type Mode, type Entry, type Part, merge}
+
+///|
 /// Push gateway request construction.
 pub using @push {type PushRequest, delete, push, push_add}
 

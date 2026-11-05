@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/multiproc"
+
+import {
+  "moonbitstack/moonp8s/metric",
+}
+
+// Values
+pub fn merge(Array[Part]) -> Array[@metric.MetricFamily] raise @metric.Refused
+
+// Errors
+
+// Types and methods
+pub(all) struct Entry {
+  metric : String
+  sample : String
+  labels : Array[(String, String)]
+  help : String
+  value : Double
+  timestamp : Double
+}
+pub fn Entry::new(String, String, Array[(String, String)], String, Double, timestamp? : Double) -> Self
+
+pub(all) enum Mode {
+  All
+  LiveAll
+  Min
+  LiveMin
+  Max
+  LiveMax
+  Sum
+  LiveSum
+  MostRecent
+  LiveMostRecent
+}
+pub fn Mode::code(Self) -> String
+pub fn Mode::is_live(Self) -> Bool
+pub fn Mode::is_most_recent(Self) -> Bool
+pub fn Mode::is_separate(Self) -> Bool
+pub fn Mode::of(String) -> Self raise @metric.Refused
+
+pub(all) struct Part {
+  pid : String
+  kind : @metric.Kind
+  mode : Mode?
+  entries : Array[Entry]
+}
+pub fn Part::decode(String, Bytes) -> Self raise @metric.Refused
+pub fn Part::encode(Self) -> Bytes
+pub fn Part::file_name(Self) -> String
+pub fn Part::name_of(String) -> (String, @metric.Kind, Mode?) raise @metric.Refused
+pub fn Part::new(String, @metric.Kind, Mode?, Array[Entry]) -> Self
+
+// Type aliases
+
+// Traits

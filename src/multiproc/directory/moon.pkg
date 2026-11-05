@@ -1,0 +1,15 @@
+// The directory several worker processes write their values into, and the read
+// that merges them at a scrape. Native only: it is the one part of this library
+// that touches the file system.
+supported_targets = "native"
+
+import {
+  "moonbitlang/async/fs",
+  "moonbitstack/moonp8s/expo",
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/multiproc",
+}
+
+import {
+  "moonbitlang/async",
+} for "test"

@@ -1,0 +1,11 @@
+// The per-process files several workers leave behind, and the merge that turns
+// them into one set of families at a scrape. The values and the file layout are
+// those of the official Prometheus clients' multiprocess mode, so a directory
+// written here can be read by another client, and the other way round.
+// The file I/O is in the `directory` subpackage, which is native only.
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "moonbitstack/moonp8s/metric",
+}

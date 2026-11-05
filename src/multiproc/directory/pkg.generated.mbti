@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonp8s/multiproc/directory"
+
+import {
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/multiproc",
+}
+
+// Values
+pub async fn collect(String, at? : Double) -> Array[@metric.MetricFamily] raise @metric.Refused
+
+pub async fn mark_dead(String, Int32) -> Int32 raise @metric.Refused
+
+pub async fn write(String, Int32, Array[@metric.MetricFamily], modes? : Array[(String, @multiproc.Mode)]) -> Written raise @metric.Refused
+
+// Errors
+
+// Types and methods
+pub(all) struct Written {
+  files : Int32
+  entries : Int32
+  skipped : Array[String]
+}
+
+// Type aliases
+
+// Traits

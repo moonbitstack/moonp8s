@@ -9,4 +9,5 @@ import {
   "moonbitstack/moonp8s/expo",
   "moonbitstack/moonp8s/push",
   "moonbitstack/moonp8s/asgi",
+  "moonbitstack/moonp8s/multiproc",
 }

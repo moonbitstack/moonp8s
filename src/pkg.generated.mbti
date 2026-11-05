@@ -5,6 +5,7 @@ import {
   "moonbitstack/moonasgi/http",
   "moonbitstack/moonp8s/expo",
   "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/multiproc",
   "moonbitstack/moonp8s/push",
 }
 
@@ -29,6 +30,8 @@ pub fn is_valid_unit(String) -> Bool
 
 pub fn linear(Double, Double, Int32) -> Array[Double] raise @metric.Refused
 
+pub fn merge(Array[@multiproc.Part]) -> Array[@metric.MetricFamily] raise @metric.Refused
+
 pub fn middleware(@metric.Registry, now? : () -> Double) -> (((@http.Request) -> @http.Response) -> ((@http.Request) -> @http.Response)) raise @metric.Refused
 
 pub fn negotiate(String) -> @expo.Format
@@ -47,6 +50,8 @@ pub fn text(Array[@metric.MetricFamily]) -> String
 
 // Type aliases
 pub using @metric {type Counter}
+
+pub using @multiproc {type Entry}
 
 pub using @metric {type Exemplar}
 
@@ -67,6 +72,10 @@ pub using @metric {type Kind}
 pub using @metric {type LocalCounter}
 
 pub using @metric {type MetricFamily}
+
+pub using @multiproc {type Mode}
+
+pub using @multiproc {type Part}
 
 pub using @metric {type Point}
 

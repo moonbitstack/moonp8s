@@ -1,0 +1,16 @@
+// Three worker processes, each writing its own file, and the scrape that adds
+// them up. Native only: it is the one example that touches the file system.
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+  "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonp8s/expo",
+  "moonbitstack/moonp8s/multiproc",
+  "moonbitstack/moonp8s/multiproc/directory",
+}
