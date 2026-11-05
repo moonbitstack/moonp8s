@@ -1,0 +1,65 @@
+name: Conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  formats:
+    name: formats
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: install moon
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: post install
+        run: |
+          moon version --all
+          moon update
+
+      - name: build the multiprocess example
+        run: |
+          moon build src/examples/09-multiprocess --target native
+          find _build/native -type f -name 09-multiprocess -perm -u+x | head -1 > /tmp/binary
+          cat /tmp/binary
+
+      - name: install prometheus
+        run: |
+          curl -fsSL -o /tmp/prometheus.tar.gz \
+            https://github.com/prometheus/prometheus/releases/download/v3.6.0/prometheus-3.6.0.linux-amd64.tar.gz
+          tar -xzf /tmp/prometheus.tar.gz -C /tmp
+          sudo cp /tmp/prometheus-3.6.0.linux-amd64/promtool /usr/local/bin/promtool
+          promtool --version
+
+      - name: install the reference client
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet prometheus_client==0.26.0
+          /tmp/venv/bin/python -c "import prometheus_client; print('prometheus_client installed')"
+
+      - name: the same operations, both ways, against prometheus_client
+        run: /tmp/venv/bin/python scripts/check_multiprocess.py --binary "$(cat /tmp/binary)"
+
+      - name: promtool and a real Prometheus, compatibility format
+        run: |
+          /tmp/venv/bin/python scripts/check_prometheus.py \
+            --binary "$(cat /tmp/binary)" \
+            --promtool promtool \
+            --docker-image prom/prometheus:v3.6.0 \
+            --format text
+
+      - name: promtool and a real Prometheus, OpenMetrics
+        run: |
+          /tmp/venv/bin/python scripts/check_prometheus.py \
+            --binary "$(cat /tmp/binary)" \
+            --promtool promtool \
+            --docker-image prom/prometheus:v3.6.0 \
+            --format openmetrics
