@@ -18,7 +18,13 @@ pub fn openmetrics(Array[@metric.MetricFamily]) -> String
 
 pub fn parse(String, format? : Format) -> Array[@metric.MetricFamily] raise @metric.Refused
 
+pub fn protobuf(Array[@metric.MetricFamily]) -> Bytes
+
+pub let protobuf_content_type : String
+
 pub fn text(Array[@metric.MetricFamily]) -> String
+
+pub fn wants_protobuf(String) -> Bool
 
 // Errors
 

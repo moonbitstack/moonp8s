@@ -2,8 +2,10 @@
 // (https://prometheus.io/docs/instrumenting/exposition_formats/), the OpenMetrics
 // 1.0 text format
 // (https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md),
-// their negotiation from an Accept header, and a parser for both.
+// their negotiation from an Accept header, a parser for both, and the protobuf
+// format Prometheus scrapes, built on moonproto's wire primitives.
 import {
   "moonbitlang/core/string",
   "moonbitstack/moonp8s/metric",
+  "moonbitstack/moonproto/wire",
 }

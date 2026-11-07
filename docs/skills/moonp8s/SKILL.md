@@ -1,6 +1,6 @@
 ---
 name: moonp8s
-description: Prometheus metrics for MoonBit — counters, gauges, histograms, summaries, a registry, the 0.0.4 and OpenMetrics 1.0 text formats, a parser for them, push gateway requests, an ASGI handler, and the aggregation of several worker processes. Use when a MoonBit service has to expose /metrics, count requests, record latency, or read an exposition another process wrote.
+description: Prometheus metrics for MoonBit — counters, gauges, histograms, summaries, a registry, the 0.0.4 and OpenMetrics 1.0 text formats, the protobuf format a scraper reads, a parser for them, push gateway requests, an ASGI handler, and the aggregation of several worker processes. Use when a MoonBit service has to expose /metrics, count requests, record latency, or read an exposition another process wrote.
 ---
 
 # moonp8s
@@ -12,9 +12,10 @@ opens a socket, so the caller schedules the scrape and hands in the time.
 moon add moonbitstack/moonp8s
 ```
 
-One package per job: `metric` (the model), `expo` (both text formats and the parser),
-`multiproc` and `multiproc/directory` (several processes), `push` (gateway requests),
-`asgi` (the `/metrics` handler). `moonbitstack/moonp8s` re-exports the common types.
+One package per job: `metric` (the model), `expo` (the two text formats, the protobuf
+format, and the parser), `multiproc` and `multiproc/directory` (several processes),
+`push` (gateway requests), `asgi` (the `/metrics` handler). `moonbitstack/moonp8s`
+re-exports the common types.
 
 ## Record a metric and write it out
 
@@ -45,6 +46,17 @@ fn main raise {
 `text` writes the compatibility format 0.0.4; `openmetrics` writes OpenMetrics 1.0 and
 ends with `# EOF`. `Format::content_type` gives the header that matches the body, and
 `negotiate(accept)` picks the format from a request's `Accept`.
+
+`protobuf(families)` writes the same snapshot as the protobuf a scraper reads: the
+`io.prometheus.client` families, length-delimited, with `protobuf_content_type` the
+header. It is built on moonproto's wire primitives, so a counter's value goes in the
+counter field and Prometheus stores it as `<name>_total`, the series `text` spells.
+
+```moonbit
+fn proto(registry : @moonp8s.Registry) -> Bytes {
+  @moonp8s.protobuf(registry.collect())
+}
+```
 
 A counter is a total: `inc` refuses a negative step and NaN. A gauge may go down. A
 histogram answers with cumulative buckets, so `observe` once per event and let the
@@ -79,7 +91,7 @@ import {
 }
 ```
 
-```moonbit
+```mbt native
 async fn flush(
   dir : String,
   pid : Int,
@@ -101,7 +113,7 @@ spellings aggregate the same way; afterwards, `@directory.mark_dead(dir, pid)` d
 the live gauges of a process that has exited and leaves the counters, whose totals are
 still true.
 
-```moonbit
+```mbt native
 async fn scrape(dir : String) -> Unit raise {
   println(@moonp8s.text(@directory.collect(dir)))
 }

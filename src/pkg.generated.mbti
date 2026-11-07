@@ -38,11 +38,17 @@ pub fn negotiate(String) -> @expo.Format
 
 pub fn openmetrics(Array[@metric.MetricFamily]) -> String
 
+pub fn protobuf(Array[@metric.MetricFamily]) -> Bytes
+
+pub let protobuf_content_type : String
+
 pub fn push(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> @push.PushRequest
 
 pub fn push_add(String, String, Array[@metric.MetricFamily], grouping_key? : Array[(String, String)], format? : @expo.Format) -> @push.PushRequest
 
 pub fn text(Array[@metric.MetricFamily]) -> String
+
+pub fn wants_protobuf(String) -> Bool
 
 // Errors
 
@@ -94,5 +100,7 @@ pub using @metric {type Summary}
 pub using @metric {type TypedFamily}
 
 pub using @metric {type Value}
+
+pub using @metric {trait LabelSet}
 
 // Traits

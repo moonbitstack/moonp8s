@@ -44,3 +44,20 @@ test "negotiate reads a version list" {
     "application/openmetrics-text; version=1.0.0; charset=utf-8",
   )
 }
+
+///|
+test "a protobuf scrape is recognised from the Accept header" {
+  assert_true(
+    wants_protobuf(
+      "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited",
+    ),
+  )
+  assert_true(
+    wants_protobuf(
+      "application/vnd.google.protobuf; q=1.0, text/plain; version=0.0.4",
+    ),
+  )
+  assert_true(!wants_protobuf("text/plain; version=0.0.4"))
+  assert_true(!wants_protobuf(""))
+  assert_true(!wants_protobuf("application/json"))
+}

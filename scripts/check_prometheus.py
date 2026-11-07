@@ -37,6 +37,7 @@ import urllib.request
 CONTENT_TYPES = {
     "text": "text/plain; version=0.0.4; charset=utf-8",
     "openmetrics": "application/openmetrics-text; version=1.0.0; charset=utf-8",
+    "protobuf": "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited",
 }
 
 SCRAPE_CONFIG = """\
@@ -64,16 +65,16 @@ def exposition(binary, directory, out, fmt):
     if fmt != "text":
         args += ["--format", fmt]
     run(binary, args)
-    with open(out, encoding="utf-8", newline="") as handle:
+    with open(out, "rb") as handle:
         return handle.read()
 
 
-def check_promtool(promtool, exposition, fmt):
+def check_promtool(promtool, body, fmt):
     # Bytes, not text: a text pipe on Windows turns every line feed into a
     # carriage return and a line feed, which is not what the library wrote.
     result = subprocess.run(
         [promtool, "check", "metrics"],
-        input=exposition.encode("utf-8"),
+        input=body,
         capture_output=True,
     )
     notes = [line for line in result.stderr.decode("utf-8").splitlines() if line.strip()]
@@ -177,12 +178,11 @@ def free_port():
 def serve(body, content_type, port, host="127.0.0.1"):
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
-            data = body.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(data)
+            self.wfile.write(body)
 
         def log_message(self, *args):
             pass
@@ -205,12 +205,16 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="moonp8s-prom-") as work:
         metrics_dir = os.path.join(work, "metrics")
-        body = exposition(
-            args.binary, metrics_dir, os.path.join(work, "body.txt"), args.format
-        )
-        print(f"{args.format}: {len(body.splitlines())} lines from three workers")
+        out = os.path.join(work, "body." + ("bin" if args.format == "protobuf" else "txt"))
+        body = exposition(args.binary, metrics_dir, out, args.format)
+        if args.format == "protobuf":
+            print(f"protobuf: {len(body)} bytes from three workers")
+        else:
+            print(f"{args.format}: {len(body.splitlines())} lines from three workers")
 
-        if args.promtool:
+        # promtool lints the text formats; the protobuf format is checked by a
+        # real Prometheus scraping it and answering the same queries.
+        if args.promtool and args.format != "protobuf":
             check_promtool(args.promtool, body, args.format)
 
         if not (args.prometheus or args.docker_image):

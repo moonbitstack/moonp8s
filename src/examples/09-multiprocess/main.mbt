@@ -10,8 +10,8 @@
 //                                                          the scrape of every file in D
 //   moon run src/examples/09-multiprocess -- --dir D --print --format openmetrics
 //                                                          the same scrape, OpenMetrics 1.0
-//   moon run src/examples/09-multiprocess -- --dir D --out body.txt --format openmetrics
-//                                                          the bytes a /metrics would send
+//   moon run src/examples/09-multiprocess -- --dir D --out body.bin --format protobuf
+//                                                          the bytes a /metrics would send, as protobuf
 //
 // A real deployment runs the first form in each worker and the last in the
 // process that answers /metrics; nothing is shared but the directory.
@@ -65,12 +65,39 @@ async fn flush(dir : String, pid : Int32) -> Unit raise @metric.Refused {
 }
 
 ///|
-async fn body_of(
+// The bytes a /metrics would send for the format, written to a file. The
+// protobuf format is binary, the text formats are strings.
+async fn to_file(
   dir : String,
-  openmetrics : Bool,
-) -> String raise @metric.Refused {
+  format : String,
+  out : String,
+) -> Unit raise @metric.Refused {
   let families = @directory.collect(dir)
-  if openmetrics {
+  if format == "protobuf" {
+    let body = @expo.protobuf(families)
+    @fs.write_file(out, body) catch {
+      _ => raise @metric.Refused("cannot write " + out)
+    }
+  } else {
+    let body = if format == "openmetrics" {
+      @expo.openmetrics(families)
+    } else {
+      @expo.text(families)
+    }
+    @fs.write_file(out, body) catch {
+      _ => raise @metric.Refused("cannot write " + out)
+    }
+  }
+}
+
+///|
+// The text a /metrics would send for the format, for the terminal. The
+// protobuf format is binary, so it reports its length instead of printing it.
+async fn render(dir : String, format : String) -> String raise @metric.Refused {
+  let families = @directory.collect(dir)
+  if format == "protobuf" {
+    @expo.protobuf(families).length().to_string() + " bytes of protobuf"
+  } else if format == "openmetrics" {
     @expo.openmetrics(families)
   } else {
     @expo.text(families)
@@ -83,7 +110,7 @@ async fn main {
   let mut dir = ""
   let mut pid = 0
   let mut print_only = false
-  let mut openmetrics = false
+  let mut format = "text"
   let mut out = ""
   let mut write = false
   for i = 1; i < args.length(); i = i + 1 {
@@ -93,10 +120,8 @@ async fn main {
       pid = @string.parse_int(args[i + 1]) catch { _ => 0 }
     } else if args[i] == "--print" {
       print_only = true
-    } else if args[i] == "--format" &&
-      i + 1 < args.length() &&
-      args[i + 1] == "openmetrics" {
-      openmetrics = true
+    } else if args[i] == "--format" && i + 1 < args.length() {
+      format = args[i + 1]
     } else if args[i] == "--out" && i + 1 < args.length() {
       out = args[i + 1]
       write = true
@@ -112,12 +137,9 @@ async fn main {
   }
   try {
     if write {
-      let body = body_of(place, openmetrics)
-      @fs.write_file(out, body) catch {
-        _ => raise @metric.Refused("cannot write " + out)
-      }
+      to_file(place, format, out)
     } else if print_only {
-      println(body_of(place, openmetrics))
+      println(render(place, format))
     } else if pid > 0 {
       flush(place, pid)
     } else {
@@ -127,7 +149,7 @@ async fn main {
         flush(place, worker)
       }
       println("")
-      println(body_of(place, openmetrics))
+      println(render(place, format))
     }
   } catch {
     @metric.Refused(message) => println("refused: " + message)

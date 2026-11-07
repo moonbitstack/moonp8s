@@ -25,6 +25,11 @@ keywords = [
   "pushgateway",
   "client",
   "asgi",
+  "protobuf",
+  "protobuf-export",
+  "delimited",
+  "scrape",
+  "collector",
   "moonbit",
 ]
 
@@ -35,6 +40,7 @@ source = "src"
 import {
   "moonbitstack/moonasgi@0.10.6",
   "moonbitstack/moonast@0.2.6",
+  "moonbitstack/moonproto@0.1.0",
   "moonbitlang/parser@0.4.6",
   "moonbitlang/async@0.22.5",
 }

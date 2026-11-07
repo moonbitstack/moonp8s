@@ -101,3 +101,17 @@ pub fn negotiate(accept : String) -> Format {
   }
   Format::Text004
 }
+
+///|
+/// Whether an `Accept` header asks for the protobuf format. It does when any
+/// part is the media type the protobuf exposition carries; the two text formats
+/// are picked out of the header by `negotiate`, which never returns a protobuf.
+pub fn wants_protobuf(accept : String) -> Bool {
+  for part in accept.split(",") {
+    let p = part.to_owned()
+    if media_type(p) == "application/vnd.google.protobuf" {
+      return true
+    }
+  }
+  false
+}

@@ -20,6 +20,7 @@ moon add moonbitstack/moonp8s
 Count and time a function by saying so on it. The function stays as it is, and a generator adds one
 beside it:
 
+<!-- nocheck -->
 ```moonbit
 #p8s.counter("orders_total", help="Orders asked for.")
 #p8s.counter("orders_refused_total", help="Orders refused.", on=raised)
@@ -65,21 +66,12 @@ formatter(ignore: [ "orders.g.mbt" ])
 ## Quick start
 
 ```moonbit
-import {
-  "moonbitstack/moonp8s",
-  "moonbitstack/moonp8s/metric",
-}
-
-try {
-  let registry = @moonp8s.Registry::new()
-  let requests = registry.counter("http_requests", "HTTP requests.")
-  requests.inc()
-  let latency = registry.histogram("request_latency_seconds", "Latency.")
-  latency.observe(0.25)
-  println(@moonp8s.text(registry.collect()))
-} catch {
-  @metric.Refused(message) => println("refused: " + message)
-}
+let registry = @moonp8s.Registry::new()
+let requests = registry.counter("http_requests", "HTTP requests.")
+requests.inc()
+let latency = registry.histogram("request_latency_seconds", "Latency.")
+latency.observe(0.25)
+println(@moonp8s.text(registry.collect()))
 ```
 
 `text` writes the compatibility format, version 0.0.4. `openmetrics` writes
@@ -133,11 +125,11 @@ let s = @moonp8s.Summary::new(quantiles=[(0.5, 0.01), (0.9, 0.01), (0.99, 0.001)
 combination of values:
 
 ```moonbit
-let requests = @moonp8s.Family::new(["method", "code"], fn() {
+let served = @moonp8s.Family::new(["method", "code"], fn() {
   @moonp8s.Counter::new()
 })
-requests.labels(["GET", "200"]).inc()
-requests.labels(["POST", "500"]).inc(by=2.0)
+served.labels(["GET", "200"]).inc()
+served.labels(["POST", "500"]).inc(by=2.0)
 ```
 
 When the label combination is better expressed as a record, implement
@@ -162,9 +154,9 @@ registration order. A counter's name may end in `_total` or not: the family is n
 and its samples are written with it, so it comes out once:
 
 ```moonbit
-let registry = @moonp8s.Registry::new(prefix="app", labels=[("region", "eu")])
-let requests = registry.counter("http_requests", "HTTP requests.")
-let sub = registry.sub(prefix="http", labels=[("server", "a")])
+let reg = @moonp8s.Registry::new(prefix="app", labels=[("region", "eu")])
+let req = reg.counter("http_requests", "HTTP requests.")
+let sub = reg.sub(prefix="http", labels=[("server", "a")])
 ```
 
 A custom source implements `Collector` and is added with `add`; the registry
@@ -242,11 +234,27 @@ they wrote can be read here.
 |:--|:--|
 | `text(families)` | Prometheus text format, version 0.0.4 |
 | `openmetrics(families)` | OpenMetrics text format, version 1.0.0, ending in `# EOF` |
+| `protobuf(families)` | the protobuf format a scraper reads, a delimited stream of families |
 | `negotiate(accept)` | `Format` chosen from an `Accept` header |
 | `parse(text, format~)` | the families an exposition describes |
 
-`parse` reads both formats. The compatibility format is lossy for info and
+`parse` reads both text formats. The compatibility format is lossy for info and
 state sets, which it spells as gauges; OpenMetrics keeps them.
+
+`protobuf` writes the `io.prometheus.client` schema Prometheus scrapes: one family per
+message, length-delimited, in the stream a real scraper reads. It reads the same snapshot
+the text formats do, so one registry is every format. A counter keeps its base name and
+puts its value in the counter field, so Prometheus stores it as `<name>_total`, the series
+the text format spells; a histogram keeps its cumulative buckets, sum, and count; a summary
+keeps its count, sum, and quantiles; a state set is a gauge per state.
+
+```moonbit
+let proto = @moonp8s.protobuf(registry.collect())
+let content_type = @moonp8s.protobuf_content_type
+```
+
+The `/metrics` handler answers a request that accepts the protobuf format with that
+content type, built on moonproto's wire primitives.
 
 ## Push gateway
 
@@ -282,7 +290,7 @@ let wrapped = @moonp8s.middleware(registry)
 |:--|:--|
 | `moonbitstack/moonp8s` | Re-exports the common types and functions. |
 | `moonbitstack/moonp8s/metric` | Metric types, families, the registry, and the snapshot model. |
-| `moonbitstack/moonp8s/expo` | Both text formats, their negotiation, and the parser. |
+| `moonbitstack/moonp8s/expo` | The two text formats, the protobuf format, their negotiation, and the parser. |
 | `moonbitstack/moonp8s/push` | Push gateway request construction. |
 | `moonbitstack/moonp8s/asgi` | The `/metrics` handler and the counting middleware. |
 | `moonbitstack/moonp8s/multiproc` | Gauge modes, a worker's file, and the merge. No I/O. |

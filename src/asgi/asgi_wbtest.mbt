@@ -51,6 +51,23 @@ test "a GET negotiates OpenMetrics" {
 }
 
 ///|
+test "a GET with a protobuf Accept answers the protobuf format" {
+  let registry = @metric.Registry::new() catch {
+    @metric.Refused(message) => abort(message)
+  }
+  let response = app(registry)(
+    empty_request("GET", "/metrics", [
+      (
+        "Accept", "application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited",
+      ),
+    ]),
+  )
+  assert_eq(response.status, 200)
+  assert_eq(response.header("Content-Type"), Some(@expo.protobuf_content_type))
+  assert_eq(response.body, @expo.protobuf(registry.collect()))
+}
+
+///|
 test "other methods are refused" {
   let registry = @metric.Registry::new() catch {
     @metric.Refused(message) => abort(message)

@@ -18,6 +18,7 @@ pub using @metric {
   type Info,
   type StateSet,
   type Family,
+  trait LabelSet,
   type TypedFamily,
   type Registry,
   type ProcessCollector,
@@ -32,8 +33,18 @@ pub using @metric {
 }
 
 ///|
-/// The exposition formats and their encoders and parser.
-pub using @expo {type Format, format_float, negotiate, openmetrics, text}
+/// The exposition formats and their encoders and parser, and the protobuf
+/// format a scraper reads.
+pub using @expo {
+  type Format,
+  format_float,
+  negotiate,
+  openmetrics,
+  protobuf,
+  protobuf_content_type,
+  text,
+  wants_protobuf,
+}
 
 ///|
 /// How several processes' values become one series, and the model of the files

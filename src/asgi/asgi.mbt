@@ -30,17 +30,25 @@ pub fn app(registry : @metric.Registry) -> @moonasgi.Handler {
       @moonasgi.Response::new(200, [], @utf8.encode(""))
     } else {
       let accept = request.header("Accept").unwrap_or("")
-      let format = @expo.negotiate(accept)
       let families = registry.collect()
-      let body = match format {
-        @expo.Format::Text004 => @expo.text(families)
-        @expo.Format::OpenMetrics100 => @expo.openmetrics(families)
+      if @expo.wants_protobuf(accept) {
+        @moonasgi.Response::new(
+          200,
+          [("Content-Type", @expo.protobuf_content_type)],
+          @expo.protobuf(families),
+        )
+      } else {
+        let format = @expo.negotiate(accept)
+        let body = match format {
+          @expo.Format::Text004 => @expo.text(families)
+          @expo.Format::OpenMetrics100 => @expo.openmetrics(families)
+        }
+        @moonasgi.Response::new(
+          200,
+          [("Content-Type", format.content_type())],
+          @utf8.encode(body),
+        )
       }
-      @moonasgi.Response::new(
-        200,
-        [("Content-Type", format.content_type())],
-        @utf8.encode(body),
-      )
     }
   }
 }

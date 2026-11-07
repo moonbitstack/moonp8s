@@ -64,3 +64,10 @@ jobs:
             --promtool promtool \
             --docker-image prom/prometheus:v3.6.0 \
             --format openmetrics
+
+      - name: a real Prometheus, protobuf
+        run: |
+          /tmp/venv/bin/python scripts/check_prometheus.py \
+            --binary "$(cat /tmp/binary)" \
+            --docker-image prom/prometheus:v3.6.0 \
+            --format protobuf
