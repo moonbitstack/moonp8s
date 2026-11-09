@@ -1,6 +1,6 @@
 name = "moonbitstack/moonp8s"
 
-version = "0.1.1"
+version = "0.1.2"
 
 readme = "README.md"
 
@@ -38,9 +38,9 @@ description = "Prometheus metrics for MoonBit."
 source = "src"
 
 import {
-  "moonbitstack/moonasgi@0.10.6",
-  "moonbitstack/moonast@0.2.6",
-  "moonbitstack/moonproto@0.1.0",
+  "moonbitstack/moonasgi@0.10.8",
+  "moonbitstack/moonast@0.2.7",
+  "moonbitstack/moonproto@0.1.1",
   "moonbitlang/parser@0.4.6",
   "moonbitlang/async@0.22.5",
 }
