@@ -148,12 +148,13 @@ fn histogram(
   let body = Buffer()
   append_uint(body, 1, count)
   append_double(body, 2, sum)
+  // The +Inf bucket is not written: the count is that bucket, and a scraper
+  // adds it back, as client_golang leaves it out.
   for entry in buckets {
-    append_message(body, 3, bucket(entry.0, entry.1))
+    if entry.0 != 1.0 / 0.0 {
+      append_message(body, 3, bucket(entry.0, entry.1))
+    }
   }
-  // The +Inf bucket is the total; a histogram is never sampled below its
-  // count, so it equals the count.
-  append_message(body, 3, bucket(1.0 / 0.0, count))
   body.to_bytes()
 }
 
@@ -273,7 +274,9 @@ fn encode_family_metrics(
 ///|
 fn encode_family(family : @metric.MetricFamily) -> Bytes {
   let body = Buffer()
-  append_string(body, 1, family.name)
+  // Prometheus takes a protobuf family's name as the series name, as
+  // client_golang writes it: a counter's carries `_total`, an info's `_info`.
+  append_string(body, 1, text_declared(family.kind, family.name).0)
   append_string(body, 2, family.help)
   append_enum(body, 3, proto_type(family.kind))
   for point in family.metrics {
@@ -286,10 +289,10 @@ fn encode_family(family : @metric.MetricFamily) -> Bytes {
 /// Write families in the Prometheus protobuf format: a length-delimited stream
 /// of `io.prometheus.client.MetricFamily` messages, the bytes a scraper reads
 /// when it answers `application/vnd.google.protobuf`. It shares the text
-/// formats' snapshot, so one scrape is every format. A counter keeps its base
-/// name and puts its value in the counter field, so Prometheus stores it as
-/// `<name>_total`, the series the text format spells; a histogram keeps its
-/// cumulative buckets, sum, and count plus its `+Inf` total; a summary keeps
+/// formats' snapshot, so one scrape is every format. A family is named as the
+/// text format declares it, so a counter is `<name>_total` with its value in
+/// the counter field and an info is `<name>_info`; a histogram keeps its
+/// cumulative buckets, sum, and count, its `+Inf` bucket being the count; a summary keeps
 /// its count, sum, and quantiles; a state set is a gauge per state.
 pub fn protobuf(families : Array[@metric.MetricFamily]) -> Bytes {
   let out = Buffer()

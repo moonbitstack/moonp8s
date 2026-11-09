@@ -949,12 +949,33 @@
   </div>
   <div class="api-doc"><p>Parse an exposition back into families. The compatibility format is lossy for info and state sets, which it spells as gauges; OpenMetrics keeps them. The format argument selects which spelling conventions to expect, and the same parser accepts both because the syntax is a superset.</p></div>
 </article>
+<article class="api-entry" id="expo-protobuf" data-name="protobuf">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">protobuf</code><code class="api-sig">(Array[@metric.MetricFamily]) -&gt; Bytes</code></span>
+  </div>
+  <div class="api-doc"><p>Write families in the Prometheus protobuf format: a length-delimited stream of <code>io.prometheus.client.MetricFamily</code> messages, the bytes a scraper reads when it answers <code>application/vnd.google.protobuf</code>. It shares the text formats' snapshot, so one scrape is every format. A family is named as the text format declares it, so a counter is <code>&amp;lt;name&amp;gt;_total</code> with its value in the counter field and an info is <code>&amp;lt;name&amp;gt;_info</code>; a histogram keeps its cumulative buckets, sum, and count, its <code>+Inf</code> bucket being the count; a summary keeps its count, sum, and quantiles; a state set is a gauge per state.</p></div>
+</article>
+<article class="api-entry" id="expo-protobuf_content_type" data-name="protobuf_content_type">
+  <div class="api-line">
+    <span class="api-kind">let</span>
+    <span class="api-call"><code class="api-name">protobuf_content_type</code><code class="api-sig">: String</code></span>
+  </div>
+  <div class="api-doc"><p>The <code>Content-Type</code> an HTTP response should carry for the protobuf format: the metric family the stream holds and the framing of the messages.</p></div>
+</article>
 <article class="api-entry" id="expo-text" data-name="text">
   <div class="api-line">
     <span class="api-kind">fn</span>
     <span class="api-call"><code class="api-name">text</code><code class="api-sig">(Array[@metric.MetricFamily]) -&gt; String</code></span>
   </div>
   <div class="api-doc"><p>Write families in the Prometheus text exposition format, version 0.0.4. Counters gain a <code>_total</code> suffix, info becomes a gauge ending in <code>_info</code>, state sets become gauges, and <code>_created</code>, <code>_gcount</code>, and <code>_gsum</code> series are emitted as separate gauge families, as the compatibility format requires.</p></div>
+</article>
+<article class="api-entry" id="expo-wants_protobuf" data-name="wants_protobuf">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">wants_protobuf</code><code class="api-sig">(String) -&gt; Bool</code></span>
+  </div>
+  <div class="api-doc"><p>Whether an <code>Accept</code> header asks for the protobuf format. It does when any part is the media type the protobuf exposition carries; the two text formats are picked out of the header by <a href="#expo-negotiate"><code>negotiate</code></a>, which never returns a protobuf.</p></div>
 </article>
 </div>
 <div class="api-group">
