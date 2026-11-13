@@ -65,41 +65,13 @@ fn quote_plus(v : String) -> String {
 }
 
 ///|
-fn base64url(v : String) -> String {
-  let alphabet : Array[Char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".to_array()
-  let bytes = @utf8.encode(v)
-  let sb = StringBuilder()
-  let mut i = 0
-  while i + 3 <= bytes.length() {
-    let n = (bytes[i].to_int() << 16) |
-      (bytes[i + 1].to_int() << 8) |
-      bytes[i + 2].to_int()
-    sb.write_char(alphabet[(n >> 18) & 63])
-    sb.write_char(alphabet[(n >> 12) & 63])
-    sb.write_char(alphabet[(n >> 6) & 63])
-    sb.write_char(alphabet[n & 63])
-    i = i + 3
-  }
-  let rest = bytes.length() - i
-  if rest == 1 {
-    let n = bytes[i].to_int() << 16
-    sb.write_char(alphabet[(n >> 18) & 63])
-    sb.write_char(alphabet[(n >> 12) & 63])
-  } else if rest == 2 {
-    let n = (bytes[i].to_int() << 16) | (bytes[i + 1].to_int() << 8)
-    sb.write_char(alphabet[(n >> 18) & 63])
-    sb.write_char(alphabet[(n >> 12) & 63])
-    sb.write_char(alphabet[(n >> 6) & 63])
-  }
-  sb.to_string()
-}
-
-///|
 fn escape_pair(name : String, value : String) -> String {
   if value == "" {
     name + "@base64/="
   } else if value.contains("/") || value.contains(" ") {
-    name + "@base64/" + base64url(value)
+    name +
+    "@base64/" +
+    @base64.encode(@utf8.encode(value), kind=@base64.Kind::Url, padding=false)
   } else {
     name + "/" + quote_plus(value)
   }
