@@ -315,11 +315,12 @@ each would cost:
   format's own grammar accepts both, and a reader must not reject either.
 
 The exposition formats themselves are checked by tooling rather than by reading:
-`promtool check metrics` lints the 0.0.4 output clean, a real Prometheus server scrapes
-both formats and the query results are compared with the values the workers recorded,
-and the multiprocess directory is exchanged with the official Python client in both
-directions, with the two renderings compared line for line — the two writers order the
-series of one family differently, and neither format gives series an order.
+`promtool check metrics` lints the 0.0.4 output clean, a real Prometheus server
+scrapes the text formats and the protobuf stream and the query results are
+compared with the values the workers recorded, and the multiprocess directory is
+exchanged with the official Python client in both directions, with the two
+renderings compared line for line — the two writers order the series of one
+family differently, and neither format gives series an order.
 
 ## Migration
 

@@ -52,7 +52,7 @@
           <span class="brand">
             <a class="wordmark" href="./">moonp8s</a>
             <span class="marginalia wide-only"
-              >Prometheus metrics · two text formats · MoonBit</span
+              >Prometheus metrics · text and protobuf · MoonBit</span
             >
             <span class="marginalia narrow-only">Prometheus · MoonBit</span>
           </span>
@@ -75,8 +75,7 @@
           <h1 class="display">Counted, not<br /><em>remembered.</em></h1>
           <p class="lede">
             moonp8s is Prometheus metrics for MoonBit. Fifteen seconds of samples
-            become one field of counters — and the two text formats a scrape can
-            read.
+            become one field of counters — and the formats a scrape can read.
           </p>
         </div>
 
@@ -175,7 +174,9 @@
                 milliseconds and stops there. OpenMetrics writes seconds, a
                 <code># UNIT</code> line, exemplars and a closing <code># EOF</code>.
                 Both come out of the same collected families, so a switch between
-                them cannot change a count.
+                them cannot change a count. A scraper that asks for protobuf gets
+                those families again, as delimited <code>io.prometheus.client</code>
+                messages.
               </p>
               <p>
                 The number above is cumulative on purpose. A histogram is not a
@@ -389,9 +390,12 @@
           </div>
 
           <div class="index-group">
-            <h3>expo — the two text formats, and their reader</h3>
+            <h3>expo — the formats, and their reader</h3>
             <div class="index-row"><span class="name">text</span><span class="leader"></span><span class="sig">(Array[MetricFamily]) → String</span></div>
             <div class="index-row"><span class="name">openmetrics</span><span class="leader"></span><span class="sig">(Array[MetricFamily]) → String</span></div>
+            <div class="index-row"><span class="name">protobuf</span><span class="leader"></span><span class="sig">(Array[MetricFamily]) → Bytes · delimited families</span></div>
+            <div class="index-row"><span class="name">wants_protobuf</span><span class="leader"></span><span class="sig">(Accept) → Bool · asked for, not negotiated</span></div>
+            <div class="index-row"><span class="name">protobuf_content_type</span><span class="leader"></span><span class="sig">the header those bytes answer with</span></div>
             <div class="index-row"><span class="name">negotiate</span><span class="leader"></span><span class="sig">(Accept) → Format</span></div>
             <div class="index-row"><span class="name">Format::content_type</span><span class="leader"></span><span class="sig">() → String · the header to answer with</span></div>
             <div class="index-row"><span class="name">parse</span><span class="leader"></span><span class="sig">(String, format?) → Array[MetricFamily] raise</span></div>

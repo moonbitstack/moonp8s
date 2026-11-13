@@ -6,7 +6,7 @@
     <title>Guide — moonp8s</title>
     <meta
       name="description"
-      content="From an empty registry to a scrape: the first metric, labels, a histogram, the two text formats, the handler, rate, and the limits of the model."
+      content="From an empty registry to a scrape: the first metric, labels, a histogram, the two text formats and the protobuf body, the handler, rate, and the limits of the model."
     />
     <meta name="color-scheme" content="dark light" />
     <link
@@ -294,12 +294,22 @@ request_duration_seconds_sum 0.358 1.700000015e+09
               The <code># EOF</code> line is not decoration — a reader uses it to tell
               a truncated scrape from a complete one.
             </p>
+            <p>
+              There is a third body: <code>@expo.protobuf</code> writes the
+              <code>io.prometheus.client</code> messages a scraper asks for with
+              <code>application/vnd.google.protobuf</code>, length-delimited, one
+              family per message. It is the same array once more, so the three
+              cannot disagree. A counter goes in its counter field and a histogram
+              keeps its cumulative buckets; Prometheus stores the first as
+              <code>&lt;name&gt;_total</code>, the series the text formats spell.
+            </p>
           </div>
           <aside class="doc-aside">
             <b>Reading it back</b>
             <p>
-              <code>@expo.parse</code> takes either format and returns families again.
-              The <a href="showcase.html">showcase</a> runs it on whatever you paste.
+              <code>@expo.parse</code> takes either text format and returns families
+              again. The <a href="showcase.html">showcase</a> runs it on whatever you
+              paste.
             </p>
           </aside>
         </section>
@@ -332,7 +342,9 @@ request_duration_seconds_sum 0.358 1.700000015e+09
             <p>
               <code>Format::content_type</code> prints the header that matches the
               body: <code>text/plain; version=0.0.4</code> or
-              <code>application/openmetrics-text; version=1.0.0</code>.
+              <code>application/openmetrics-text; version=1.0.0</code>. A request
+              that accepts protobuf is answered with
+              <code>protobuf_content_type</code> and the binary body instead.
             </p>
           </aside>
         </section>
@@ -452,13 +464,16 @@ request_duration_seconds_sum 0.358 1.700000015e+09
           <div class="doc-body">
             <h2>What is not here.</h2>
             <p>
-              Three things a Prometheus client in another language does that this one
-              does not, and one it does differently.
+              Four things a Prometheus client in another language does that this one
+              does not.
             </p>
             <ul>
               <li>
-                <b>No protobuf.</b> The two text formats are the surface. A binary
-                exposition is a different transport, and it is not promised here.
+                <b>No native histograms.</b> A histogram answers with the classic
+                cumulative buckets, in both text formats and in protobuf. The sparse
+                encoding a newer scraper can be taught to read is a second bucket
+                model, and a series that carries it is one an older Prometheus
+                cannot read at all.
               </li>
               <li>
                 <b>No multiprocess directory on wasm.</b> The merge is portable, but
