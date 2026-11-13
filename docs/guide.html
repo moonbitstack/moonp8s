@@ -248,6 +248,11 @@ latency.<span class="a">observe</span>(0.317)
 <span class="k">let</span> wide = <span class="a">@metric.Histogram</span>::new(buckets=[0.1, 0.5, 2.0])
 <span class="k">let</span> log = <span class="a">@metric.Histogram</span>::new(
   buckets=<span class="a">@metric.exponential</span>(0.004, 1.4, 20),
+)
+
+<span class="c">// or name both ends and let the ratio follow: a millisecond to a minute</span>
+<span class="k">let</span> span = <span class="a">@metric.Histogram</span>::new(
+  buckets=<span class="a">@metric.exponential_range</span>(0.001, 60.0, 12),
 )</code></pre>
             <p>
               An observation that lands above the last bound is counted in

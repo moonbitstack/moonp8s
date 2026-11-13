@@ -20,6 +20,8 @@ pub let exemplar_label_limit : Int32
 
 pub fn exponential(Double, Double, Int32) -> Array[Double] raise @metric.Refused
 
+pub fn exponential_range(Double, Double, Int32) -> Array[Double] raise @metric.Refused
+
 pub fn format_float(Double) -> String
 
 pub fn is_valid_label_name(String) -> Bool

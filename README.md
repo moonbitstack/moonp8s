@@ -112,6 +112,14 @@ The default histogram buckets are the shared client defaults, 0.005 through 10:
 let h = @moonp8s.Histogram::new(buckets=@moonp8s.linear(1.0, 1.0, 5))
 ```
 
+When the span is known and the ratio between steps is not, `exponential_range`
+derives the ratio from the two ends:
+
+```moonbit
+let bounds = @moonp8s.exponential_range(0.001, 60.0, 12)
+let h = @moonp8s.Histogram::new(buckets=bounds)
+```
+
 A summary with quantiles uses a Greenwald-Khanna sketch, so memory grows with
 the log of the observation count rather than with the count:
 

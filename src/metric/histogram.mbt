@@ -107,6 +107,44 @@ pub fn exponential(
 }
 
 ///|
+/// `count` bounds from `low` to `high`, each a fixed multiple of the one before,
+/// the multiple chosen so the last is `high`: `high / low` to the power
+/// `1 / (count - 1)`. Two bounds are the least that names a range, and a range
+/// that does not grow is refused rather than returned as a row of equal bounds.
+///
+/// This is for the case where the interesting span is known and the ratio
+/// between steps is not: a request that answers in milliseconds or in seconds
+/// wants `exponential_range(0.001, 60.0, 12)`, not a factor picked by hand.
+pub fn exponential_range(
+  low : Double,
+  high : Double,
+  count : Int32,
+) -> Array[Double] raise Refused {
+  if count < 2 {
+    raise Refused(
+      "exponential_range needs at least two bounds, got " + count.to_string(),
+    )
+  }
+  if low <= 0.0 {
+    raise Refused(
+      "exponential_range needs a positive low bound, got " + low.to_string(),
+    )
+  }
+  if high <= low {
+    raise Refused(
+      "exponential_range needs a high bound above the low one, got " +
+      high.to_string(),
+    )
+  }
+  let factor = @math.pow(high / low, 1.0 / (count - 1).to_double())
+  let out : Array[Double] = []
+  for i = 0; i < count; i = i + 1 {
+    out.push(low * @math.pow(factor, i.to_double()))
+  }
+  out
+}
+
+///|
 /// A histogram with cumulative buckets. Counts are kept per bucket and made
 /// cumulative on snapshot, which is what the wire format carries.
 pub struct Histogram {

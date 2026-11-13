@@ -153,6 +153,14 @@
   </div>
   <div class="api-doc"><p><code>count</code> bounds starting at <code>start</code> and multiplying by <code>factor</code>.</p></div>
 </article>
+<article class="api-entry" id="metric-exponential_range" data-name="exponential_range">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">exponential_range</code><code class="api-sig">(Double, Double, Int32) -&gt; Array[Double] raise Refused</code></span>
+  </div>
+  <div class="api-doc"><p><code>count</code> bounds from <code>low</code> to <code>high</code>, each a fixed multiple of the one before, the multiple chosen so the last is <code>high</code>: <code>high / low</code> to the power <code>1 / (count - 1)</code>. Two bounds are the least that names a range, and a range that does not grow is refused rather than returned as a row of equal bounds.</p>
+<p>This is for the case where the interesting span is known and the ratio between steps is not: a request that answers in milliseconds or in seconds wants <code>exponential_range(0.001, 60.0, 12)</code>, not a factor picked by hand.</p></div>
+</article>
 <article class="api-entry" id="metric-is_valid_label_name" data-name="is_valid_label_name">
   <div class="api-line">
     <span class="api-kind">fn</span>

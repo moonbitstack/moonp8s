@@ -130,6 +130,63 @@ test "linear and exponential helpers" {
 }
 
 ///|
+fn near(got : Double, want : Double) -> Bool {
+  ((got - want) / want).abs() < 1.0e-9
+}
+
+///|
+test "exponential_range keeps both ends and grows by one factor between them" {
+  let range = @metric.exponential_range(1.0, 1000.0, 4) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  assert_eq(range.length(), 4)
+  assert_true(range[0] == 1.0)
+  assert_true(near(range[1], 10.0))
+  assert_true(near(range[2], 100.0))
+  assert_true(near(range[3], 1000.0))
+  // The bounds the helper returns are a histogram's bounds as they are.
+  let h = @metric.Histogram::new(buckets=range) catch {
+    @metric.Refused(_) => abort("unexpected refusal")
+  }
+  h.observe(5.0)
+  assert_true(h.total() == 1L)
+}
+
+///|
+test "exponential_range refuses a span that is not one" {
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(1.0, 10.0, 1))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(1.0, 10.0, 0))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(0.0, 10.0, 4))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(-1.0, 10.0, 4))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(10.0, 10.0, 4))
+    }),
+  )
+  assert_true(
+    refused(fn() raise @metric.Refused {
+      ignore(@metric.exponential_range(10.0, 1.0, 4))
+    }),
+  )
+}
+
+///|
 test "summary counts and sums without quantiles" {
   let s = @metric.Summary::new()
   s.observe(2.0)

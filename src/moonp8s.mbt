@@ -26,6 +26,7 @@ pub using @metric {
   buckets,
   exemplar_label_limit,
   exponential,
+  exponential_range,
   is_valid_label_name,
   is_valid_metric_name,
   is_valid_unit,
