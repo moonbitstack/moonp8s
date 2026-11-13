@@ -7,9 +7,9 @@ let orders_total : @moonp8s.Counter = @moonp8s.Counter::new()
 let orders_refused_total : @moonp8s.Counter = @moonp8s.Counter::new()
 
 ///|
-let order_seconds : @moonp8s.Histogram = try {
-  @moonp8s.Histogram::new(buckets=[0.5, 1.0, 5.0])
-} catch{
+let order_seconds : @moonp8s.Histogram = @moonp8s.Histogram::new(
+  buckets=[0.5, 1.0, 5.0],
+) catch {
   _ => abort("order_seconds")
 }
 
@@ -31,15 +31,11 @@ fn register_metrics(registry : @moonp8s.Registry) -> Unit raise @metric.Refused 
 ///|
 fn place_metered(item : String, now~ : () -> Double) -> Int32 raise Sold {
   let started = now()
-  try {
-    orders_total.inc()
-  } catch{
+  orders_total.inc() catch {
     _ => ()
   }
   errdefer {
-    try {
-      orders_refused_total.inc()
-    } catch{
+    orders_refused_total.inc() catch {
       _ => ()
     }
     order_seconds.observe(now() - started)
