@@ -38,10 +38,10 @@ description = "Prometheus metrics for MoonBit."
 source = "src"
 
 import {
-  "moonbitstack/moonasgi@0.10.8",
-  "moonbitstack/moonast@0.2.7",
-  "moonbitstack/moonproto@0.1.1",
-  "moonbitlang/parser@0.4.6",
+  "moonbitstack/moonasgi@0.11.2",
+  "moonbitstack/moonast@0.3.0",
+  "moonbitstack/moonproto@0.1.2",
+  "moonbitlang/parser@0.4.8",
   "moonbitlang/async@0.22.5",
   "moonbitstack/moonjson@0.5.0",
 }
