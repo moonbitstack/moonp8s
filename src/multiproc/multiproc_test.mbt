@@ -54,6 +54,36 @@ test "a part survives the bytes a worker writes" {
 }
 
 ///|
+test "a record pads by the bytes of its key, not by its characters" {
+  // A key of multi-byte characters is longer on disk than it looks; padding to
+  // an eight-byte boundary has to count the bytes, or the value that follows is
+  // read from the wrong offset.
+  let part = @multiproc.Part::new(
+    "5",
+    @metric.Kind::Gauge,
+    Some(@multiproc.Mode::All),
+    [
+      @multiproc.Entry::new(
+        "queue",
+        "queue_depth",
+        [("名字", "队列一"), ("note", "a\"b\\c🙂")],
+        "深度",
+        7.0,
+        timestamp=1700000001.5,
+      ),
+    ],
+  )
+  let back = @multiproc.Part::decode(part.file_name(), part.encode()) catch {
+    @metric.Refused(message) => abort(message)
+  }
+  assert_eq(back.entries.length(), 1)
+  assert_eq(back.entries[0].help, "深度")
+  assert_true(back.entries[0].value == 7.0)
+  assert_true(back.entries[0].timestamp == 1700000001.5)
+  assert_eq(back.entries[0].labels.length(), 2)
+}
+
+///|
 test "a gauge file carries its mode in its name" {
   let part = @multiproc.Part::new(
     "9",

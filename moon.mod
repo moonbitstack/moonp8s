@@ -43,6 +43,7 @@ import {
   "moonbitstack/moonproto@0.1.1",
   "moonbitlang/parser@0.4.6",
   "moonbitlang/async@0.22.5",
+  "moonbitstack/moonjson@0.5.0",
 }
 
 preferred_target = "native"

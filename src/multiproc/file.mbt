@@ -112,17 +112,19 @@ fn key_of(entry : Entry) -> String {
   for pair in entry.labels {
     labels[pair.0] = Json::string(pair.1)
   }
-  Json::array([
-    Json::string(entry.metric),
-    Json::string(entry.sample),
-    Json::object(labels),
-    Json::string(entry.help),
-  ]).stringify()
+  @moonjson.dumps(
+    Json::array([
+      Json::string(entry.metric),
+      Json::string(entry.sample),
+      Json::object(labels),
+      Json::string(entry.help),
+    ]),
+  )
 }
 
 ///|
 fn entry_of_key(key : String) -> Entry raise @metric.Refused {
-  let parsed = @json.parse(key) catch {
+  let parsed = @moonjson.loads(key, @moonjson.strict) catch {
     _ => raise @metric.Refused("a key in the file is not JSON: " + key)
   }
   let fields = match parsed {
