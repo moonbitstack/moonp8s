@@ -1,6 +1,6 @@
 name = "moonbitstack/moonp8s"
 
-version = "0.1.2"
+version = "0.2.0"
 
 readme = "README.md"
 
@@ -40,7 +40,7 @@ source = "src"
 import {
   "moonbitstack/moonasgi@0.11.2",
   "moonbitstack/moonast@0.3.0",
-  "moonbitstack/moonproto@0.1.2",
+  "moonbitstack/moonproto@0.2.0",
   "moonbitlang/parser@0.4.8",
   "moonbitlang/async@0.22.5",
   "moonbitstack/moonjson@0.5.0",
