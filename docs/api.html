@@ -189,6 +189,13 @@
   </div>
   <div class="api-doc"><p><code>count</code> bounds starting at <code>start</code> and growing by <code>width</code>.</p></div>
 </article>
+<article class="api-entry" id="metric-native" data-name="native">
+  <div class="api-line">
+    <span class="api-kind">let</span>
+    <span class="api-call"><code class="api-name">native</code><code class="api-sig">: Native</code></span>
+  </div>
+  <div class="api-doc"><p>The settings a native histogram starts from. <code>factor</code> 1.1 is the trade-off client_golang's documentation recommends (eight buckets per power of two); <code>zero_threshold</code> is its default, 2^-128; <code>max_buckets</code> 100 and <code>min_reset</code> fifteen minutes are what its native histogram example sets, since an unlimited bucket count lets wide-spread input grow the histogram without end; <code>max_zero_threshold</code> 0 never widens the zero bucket, its default; ten exemplars kept for five minutes are its defaults.</p></div>
+</article>
 <article class="api-entry" id="metric-point_of" data-name="point_of">
   <div class="api-line">
     <span class="api-kind">fn</span>
@@ -392,28 +399,28 @@
     <span class="api-call"><code class="api-name">Histogram</code></span>
     <span class="api-meta">Metric</span>
   </div>
-  <div class="api-doc"><p>A histogram with cumulative buckets. Counts are kept per bucket and made cumulative on snapshot, which is what the wire format carries.</p></div>
+  <div class="api-doc"><p>A histogram with cumulative buckets. Counts are kept per bucket and made cumulative on snapshot, which is what the wire format carries. With <a href="#metric-native"><code>native</code></a> it also keeps native buckets, or only those when no classic buckets were asked for.</p></div>
   <div class="api-methods">
 <article class="api-entry api-method" id="metric-Histogram-new" data-name="Histogram::new">
   <div class="api-line">
     <span class="api-kind">fn</span>
-    <span class="api-call"><code class="api-name">Histogram::new</code><code class="api-sig">(buckets? : Array[Double], created? : Double) -&gt; Self raise Refused</code></span>
+    <span class="api-call"><code class="api-name">Histogram::new</code><code class="api-sig">(buckets? : Array[Double], created? : Double, native? : Native, clock? : () -&gt; Double) -&gt; Self raise Refused</code></span>
   </div>
-  <div class="api-doc"><p>A histogram over <a href="#metric-buckets"><code>buckets</code></a> (the shared defaults unless given).</p></div>
+  <div class="api-doc"><p>A histogram over <a href="#metric-buckets"><code>buckets</code></a>. Without <a href="#metric-buckets"><code>buckets</code></a> it uses the shared defaults, or none at all when <a href="#metric-native"><code>native</code></a> is given, which is what client_golang does with a bucket factor and no bucket list. <a href="#metric-native"><code>native</code></a> adds native buckets with those settings; <code>clock</code> is the time in Unix seconds the native buckets' resets are measured by, the system clock unless given.</p></div>
 </article>
 <article class="api-entry api-method" id="metric-Histogram-observe" data-name="Histogram::observe">
   <div class="api-line">
     <span class="api-kind">fn</span>
     <span class="api-call"><code class="api-name">Histogram::observe</code><code class="api-sig">(Self, Double, exemplar? : Exemplar) -&gt; Unit</code></span>
   </div>
-  <div class="api-doc"><p>Record one observation in the first bucket whose bound it does not exceed, or in the <code>+Inf</code> bucket when it exceeds every bound.</p></div>
+  <div class="api-doc"><p>Record one observation in the first bucket whose bound it does not exceed, or in the <code>+Inf</code> bucket when it exceeds every bound, and in its native bucket. NaN counts in the sum and the count but in no native bucket.</p></div>
 </article>
 <article class="api-entry api-method" id="metric-Histogram-snapshot" data-name="Histogram::snapshot">
   <div class="api-line">
     <span class="api-kind">fn</span>
     <span class="api-call"><code class="api-name">Histogram::snapshot</code><code class="api-sig">(Self) -&gt; Point</code></span>
   </div>
-  <div class="api-doc"><p>The snapshot of this histogram: cumulative bucket counts, the sum, and the total count, with the retained exemplars.</p></div>
+  <div class="api-doc"><p>The snapshot of this histogram: cumulative bucket counts, the sum, and the total count, with the retained exemplars, and the native buckets when it keeps them.</p></div>
 </article>
 <article class="api-entry api-method" id="metric-Histogram-sum_value" data-name="Histogram::sum_value">
   <div class="api-line">
@@ -582,6 +589,55 @@
     </div>
   </dl>
 </article>
+<article class="api-entry" id="metric-Native" data-name="Native">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Native</code></span>
+    <span class="api-meta">Eq · Debug</span>
+  </div>
+  <div class="api-doc"><p>How a histogram keeps native buckets. Passed to <a href="#metric-Histogram-new"><code>Histogram::new</code></a> as <a href="#metric-native"><code>native</code></a>, it adds them beside the classic buckets, or replaces those when no classic buckets are given.</p>
+<p>- <code>factor</code>: the largest ratio between the bounds of neighbouring buckets; the schema is the   coarsest one that keeps within it. Must be above 1. - <code>zero_threshold</code>: observations whose absolute value is at most this go to the zero bucket. - <code>max_buckets</code>: once more buckets than this are populated, the histogram is reset if   <code>min_reset</code> seconds have passed since the last reset, else the zero bucket is widened up   to <code>max_zero_threshold</code>, else every bucket is made twice as wide. 0 is no limit. - <code>min_reset</code>: seconds between resets; 0 never resets. A widened or coarsened histogram goes   back to its first resolution once this has passed. - <code>max_exemplars</code>, <code>exemplar_ttl</code>: how many exemplars the native buckets keep, and after how   many seconds an old one is the first to go; <code>max_exemplars</code> 0 keeps none.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>factor</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>zero_threshold</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>max_buckets</dt>
+      <dd>Int32</dd>
+    </div>
+    <div>
+      <dt>min_reset</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>max_zero_threshold</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>max_exemplars</dt>
+      <dd>Int32</dd>
+    </div>
+    <div>
+      <dt>exemplar_ttl</dt>
+      <dd>Double</dd>
+    </div>
+  </dl>
+  <div class="api-methods">
+<article class="api-entry api-method" id="metric-Native-new" data-name="Native::new">
+  <div class="api-line">
+    <span class="api-kind">fn</span>
+    <span class="api-call"><code class="api-name">Native::new</code><code class="api-sig">(factor? : Double, zero_threshold? : Double, max_buckets? : Int32, min_reset? : Double, max_zero_threshold? : Double, max_exemplars? : Int32, exemplar_ttl? : Double) -&gt; Self</code></span>
+  </div>
+  <div class="api-doc"><p><a href="#metric-native"><code>native</code></a> with the settings named here changed.</p></div>
+</article>
+  </div>
+  <p class="api-derived">Also on the type: <code>equal</code> · <code>not_equal</code> · <code>to_repr</code> — derived, or required by an implementation above.</p>
+</article>
 <article class="api-entry" id="metric-Point" data-name="Point">
   <div class="api-line">
     <span class="api-kind">struct</span>
@@ -697,9 +753,9 @@
 <article class="api-entry api-method" id="metric-Registry-histogram" data-name="Registry::histogram">
   <div class="api-line">
     <span class="api-kind">fn</span>
-    <span class="api-call"><code class="api-name">Registry::histogram</code><code class="api-sig">(Self, String, String, buckets? : Array[Double], unit? : String) -&gt; Histogram raise Refused</code></span>
+    <span class="api-call"><code class="api-name">Registry::histogram</code><code class="api-sig">(Self, String, String, buckets? : Array[Double], unit? : String, native? : Native) -&gt; Histogram raise Refused</code></span>
   </div>
-  <div class="api-doc"><p>Create a histogram, register it, and return it.</p></div>
+  <div class="api-doc"><p>Create a histogram, register it, and return it. <a href="#metric-buckets"><code>buckets</code></a> and <a href="#metric-native"><code>native</code></a> are as <a href="#metric-Histogram-new"><code>Histogram::new</code></a> takes them.</p></div>
 </article>
 <article class="api-entry api-method" id="metric-Registry-new" data-name="Registry::new">
   <div class="api-line">
@@ -724,6 +780,39 @@
 </article>
   </div>
   <p class="api-derived">Also on the type: <code>collect</code> — derived, or required by an implementation above.</p>
+</article>
+<article class="api-entry" id="metric-Sparse" data-name="Sparse">
+  <div class="api-line">
+    <span class="api-kind">struct</span>
+    <span class="api-call"><code class="api-name">Sparse</code></span>
+  </div>
+  <div class="api-doc"><p>The native buckets of a histogram at one moment. <code>positive</code> and <code>negative</code> hold the populated buckets as <code>(key, count)</code> in key order, bucket <code>key</code> covering (2^((key-1)/2^schema), 2^(key/2^schema)] on its side; <code>zero_count</code> counts the observations within <code>zero_threshold</code> of zero; <code>exemplars</code> are the ones kept for the native buckets.</p></div>
+  <dl class="api-fields">
+    <div>
+      <dt>schema</dt>
+      <dd>Int32</dd>
+    </div>
+    <div>
+      <dt>zero_threshold</dt>
+      <dd>Double</dd>
+    </div>
+    <div>
+      <dt>zero_count</dt>
+      <dd>Int64</dd>
+    </div>
+    <div>
+      <dt>positive</dt>
+      <dd>Array[(Int32, Int64)]</dd>
+    </div>
+    <div>
+      <dt>negative</dt>
+      <dd>Array[(Int32, Int64)]</dd>
+    </div>
+    <div>
+      <dt>exemplars</dt>
+      <dd>Array[Exemplar]</dd>
+    </div>
+  </dl>
 </article>
 <article class="api-entry" id="metric-StateSet" data-name="StateSet">
   <div class="api-line">
@@ -831,6 +920,11 @@
     <div class="api-variant">
       <code>Buckets(buckets~ : Array[(Double, Int64)], sum~ : Double, count~ : Int64)</code>
       <p></p>
+    </div>
+    <div class="api-variant">
+      <code>Native(buckets~ : Array[(Double, Int64)], sparse~ : Sparse, sum~ : Double, count~ : Int64)</code>
+      <p>A histogram with native buckets, and the classic ones it also keeps (none when it keeps
+only native ones). Text formats carry the classic part; protobuf carries both.</p>
     </div>
     <div class="api-variant">
       <code>Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)</code>

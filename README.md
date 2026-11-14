@@ -88,7 +88,7 @@ let content_type = @moonp8s.Format::OpenMetrics100.content_type()
 |:--|:--|:--|
 | `Counter` | `inc(by~, exemplar?)`, `reset(created?)`, `get()` | Only increases; a negative step or NaN is refused. A reset dates the series anew, or forgets when it started. |
 | `Gauge` | `set(v, timestamp?)`, `inc(by~)`, `dec(by~)`, `set_function(f)`, `get()` | Pass the timestamp to date a sample; a function replaces the stored value. |
-| `Histogram` | `observe(v, exemplar?)`, `snapshot()` | Buckets from `buckets~`; `linear` and `exponential` build them. |
+| `Histogram` | `observe(v, exemplar?)`, `snapshot()` | Classic buckets from `buckets`, which `linear` and `exponential` build; native buckets with `native`. |
 | `GaugeHistogram` | `observe`, `snapshot()` | A gauge's sum and count over histogram buckets. |
 | `Summary` | `observe(v)`, `snapshot()` | Count and sum by default; `quantiles~` adds estimates. |
 | `Info` | `Info::new(labels)` | A fixed label set whose value is 1. |
@@ -126,6 +126,36 @@ the log of the observation count rather than with the count:
 ```moonbit
 let s = @moonp8s.Summary::new(quantiles=[(0.5, 0.01), (0.9, 0.01), (0.99, 0.001)])
 ```
+
+### Native histograms
+
+A native histogram keeps buckets whose bounds grow by a fixed factor, only where
+observations fell, so it is fine-grained over any range without a list of bounds.
+It is off unless asked for; `native` turns it on, alone or beside classic buckets:
+
+```moonbit
+let sizes = @moonp8s.Histogram::new(native=@moonp8s.native)
+let both = @moonp8s.Histogram::new(
+  buckets=@moonp8s.buckets,
+  native={ ..@moonp8s.native, factor: 1.05, max_buckets: 160 },
+)
+sizes.observe(1500.0)
+both.observe(0.2)
+```
+
+| Setting | Preset | Meaning |
+|:--|:--|:--|
+| `factor` | 1.1 | Largest ratio between neighbouring bounds; picks the schema |
+| `zero_threshold` | 2^-128 | Observations this close to zero share one bucket |
+| `max_buckets` | 100 | Above this many populated buckets: reset, widen the zero bucket, or halve the resolution, in that order |
+| `min_reset` | 900 s | Time between resets; 0 never resets |
+| `max_zero_threshold` | 0 | How wide the zero bucket may grow |
+| `max_exemplars`, `exemplar_ttl` | 10, 300 s | Exemplars kept for the native buckets |
+
+Only the protobuf format carries native buckets, so a scraper has to ask for it;
+the text formats write the classic buckets and the count. `Native::new` changes
+named settings, `{ ..native, x: v }` does the same, and the two are equal. The
+clock a reset is measured by is the system's unless `clock` is passed.
 
 ## Labels and families
 
@@ -321,6 +351,11 @@ each would cost:
 - **Counts rendered as floats.** Counts and bucket values are integers in the model,
   and written `17.0` rather than `17`, as every official client writes them. The
   format's own grammar accepts both, and a reader must not reject either.
+
+Native histograms are compared with client_golang: the same observations, across
+every schema, the zero bucket and the bucket limit, give the same protobuf bytes,
+and a real Prometheus scraping both answers `histogram_count`, `histogram_sum`,
+`histogram_quantile` and `histogram_fraction` the same.
 
 The exposition formats themselves are checked by tooling rather than by reading:
 `promtool check metrics` lints the 0.0.4 output clean, a real Prometheus server

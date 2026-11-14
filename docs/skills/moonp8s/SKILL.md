@@ -62,6 +62,27 @@ A counter is a total: `inc` refuses a negative step and NaN. A gauge may go down
 histogram answers with cumulative buckets, so `observe` once per event and let the
 scrape do the arithmetic.
 
+## Native histograms
+
+Off unless asked for. `native` adds buckets whose bounds grow by a fixed factor, kept only
+where observations fell; with no `buckets` given they replace the classic ones.
+
+```moonbit
+fn sizes(registry : @moonp8s.Registry) -> @moonp8s.Histogram raise {
+  registry.histogram(
+    "request_size_bytes",
+    "Request sizes.",
+    native={ ..@moonp8s.native, factor: 1.05 },
+  )
+}
+```
+
+The preset is client_golang's: factor 1.1, zero threshold 2^-128, at most 100 populated
+buckets, a reset after 900 seconds, ten exemplars kept 300 seconds. Over the bucket limit
+the histogram resets, else widens the zero bucket up to `max_zero_threshold`, else halves
+its resolution. Native buckets go out only in `protobuf`; `text` and `openmetrics` carry
+the classic buckets and the count.
+
 ## One metric, many series
 
 Label names are fixed when the family is built; `labels` gets or creates the child for
@@ -146,13 +167,15 @@ and observes their duration; it takes the clock, so a test can drive time.
 
 ## Rules that bite
 
-- **No clock, no socket.** `collect(at=...)` stamps samples with the moment you pass;
-  `Gauge::set` takes a timestamp when a sample is worth dating. Nothing is read for you.
+- **One clock, no socket.** `collect(at=...)` stamps samples with the moment you pass;
+  `Gauge::set` takes a timestamp when a sample is worth dating. The one clock read for you
+  is a native histogram's, for its resets; pass `clock` to `Histogram::new` to set it.
 - **A name is spent once.** A second registration of the same name is refused, and so is
   a name that would collide with another family's sample — a gauge called `orders_total`
   next to a counter called `orders`.
 - **Refused is the only error.** `Refused(message)`; pattern-match it or print it.
 - **Multi-process is native only.** The merge is portable, but reading and writing a
-  worker's file needs a file system.
+  worker's file needs a file system. Native histograms are refused there, as
+  prometheus_client refuses them: their resolution changes as they fill.
 - **Summary quantiles do not travel across processes**, and an info metric or a state
   set is process-local; `write` returns the names it left out instead of hiding them.

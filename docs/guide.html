@@ -260,6 +260,32 @@ latency.<span class="a">observe</span>(0.317)
               to its own <code>_count</code>, which is the property a summary does not
               have.
             </p>
+            <p>
+              Native buckets need no edges at all: their bounds grow by a fixed factor
+              and only the buckets an observation fell in are kept. They are off unless
+              asked for, and they travel only in protobuf, so the scraper has to ask
+              for that format; the text formats still carry the classic buckets.
+            </p>
+            <!-- nocheck: a fragment, not a program -->
+            <pre><code><span class="c">// native buckets alone: factor 1.1, at most 100 populated</span>
+<span class="k">let</span> sizes = registry.<span class="a">histogram</span>(
+  <span class="s">"request_size_bytes"</span>,
+  <span class="s">"Request sizes."</span>,
+  native=<span class="a">@metric.native</span>,
+)
+
+<span class="c">// both kinds, with a finer factor</span>
+<span class="k">let</span> both = <span class="a">@metric.Histogram</span>::new(
+  buckets=<span class="a">@metric.buckets</span>,
+  native={ ..<span class="a">@metric.native</span>, factor: 1.05 },
+)</code></pre>
+            <p>
+              Past <code>max_buckets</code> populated buckets the histogram resets if
+              <code>min_reset</code> has passed since the last reset, otherwise widens
+              the zero bucket up to <code>max_zero_threshold</code>, otherwise halves
+              its resolution, and goes back to the first resolution once
+              <code>min_reset</code> has passed.
+            </p>
           </div>
           <aside class="doc-aside">
             <b>Bounds, not buckets</b>
@@ -469,17 +495,10 @@ request_duration_seconds_sum 0.358 1.700000015e+09
           <div class="doc-body">
             <h2>What is not here.</h2>
             <p>
-              Four things a Prometheus client in another language does that this one
+              Three things a Prometheus client in another language does that this one
               does not.
             </p>
             <ul>
-              <li>
-                <b>No native histograms.</b> A histogram answers with the classic
-                cumulative buckets, in both text formats and in protobuf. The sparse
-                encoding a newer scraper can be taught to read is a second bucket
-                model, and a series that carries it is one an older Prometheus
-                cannot read at all.
-              </li>
               <li>
                 <b>No multiprocess directory on wasm.</b> The merge is portable, but
                 reading and writing a worker's file is a native package: the
