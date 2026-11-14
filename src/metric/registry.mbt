@@ -201,18 +201,17 @@ pub fn Registry::gauge(
 }
 
 ///|
-/// Create a histogram, register it, and return it.
+/// Create a histogram, register it, and return it. `buckets` and `native` are as
+/// `Histogram::new` takes them.
 pub fn Registry::histogram(
   self : Registry,
   name : String,
   help : String,
   buckets? : Array[Double],
   unit? : String,
+  native? : Native,
 ) -> Histogram raise Refused {
-  let metric = match buckets {
-    Some(b) => Histogram::new(buckets=b)
-    None => Histogram::new()
-  }
+  let metric = Histogram::new(buckets?, native?)
   self.register(name, help, metric, unit?)
   metric
 }

@@ -13,6 +13,8 @@ pub using @metric {
   type LocalCounter,
   type Gauge,
   type Histogram,
+  type Native,
+  type Sparse,
   type GaugeHistogram,
   type Summary,
   type Info,
@@ -31,6 +33,7 @@ pub using @metric {
   is_valid_metric_name,
   is_valid_unit,
   linear,
+  native,
 }
 
 ///|

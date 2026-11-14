@@ -50,6 +50,28 @@ fn append_uint(buf : Buffer, number : Int32, value : Int64) -> Unit {
 }
 
 ///|
+// A signed varint field in the zigzag form `sint32` and `sint64` use.
+fn append_sint(buf : Buffer, number : Int32, value : Int64) -> Unit {
+  @wire.append_tag(buf, number, @wire.WireType::Varint)
+  @wire.append_varint(buf, @wire.encode_zigzag(value))
+}
+
+///|
+// A google.protobuf.Timestamp from Unix seconds: whole seconds, then the nanoseconds left.
+fn timestamp_proto(seconds : Double) -> Bytes {
+  let whole = seconds.floor()
+  let nanos = ((seconds - whole) * 1.0e9).round().to_int()
+  let body = Buffer()
+  if whole != 0.0 {
+    append_uint(body, 1, whole.to_int64())
+  }
+  if nanos != 0 {
+    append_uint(body, 2, nanos.to_int64())
+  }
+  body.to_bytes()
+}
+
+///|
 fn append_enum(buf : Buffer, number : Int32, value : Int32) -> Unit {
   @wire.append_tag(buf, number, @wire.WireType::Varint)
   @wire.append_varint(buf, value.to_uint64())
@@ -85,10 +107,17 @@ fn quantile(quantile : Double, value : Double) -> Bytes {
 }
 
 ///|
-fn bucket(upper_bound : Double, cumulative_count : Int64) -> Bytes {
+fn bucket(
+  upper_bound : Double,
+  cumulative_count : Int64,
+  exemplar : @metric.Exemplar?,
+) -> Bytes {
   let body = Buffer()
   append_uint(body, 1, cumulative_count)
   append_double(body, 2, upper_bound)
+  if exemplar is Some(ex) {
+    append_message(body, 3, exemplar_proto(ex))
+  }
   body.to_bytes()
 }
 
@@ -106,8 +135,9 @@ fn exemplar_proto(ex : @metric.Exemplar) -> Bytes {
     append_message(body, 1, label_pair(pair.0, pair.1))
   }
   append_double(body, 2, ex.value)
+  // The schema's timestamp is a google.protobuf.Timestamp message, not a number.
   match ex.timestamp {
-    Some(t) => append_double(body, 3, t)
+    Some(t) => append_message(body, 3, timestamp_proto(t))
     None => ()
   }
   body.to_bytes()
@@ -140,19 +170,124 @@ fn summary(
 }
 
 ///|
+// The exemplar a classic bucket carries: the one whose value falls in it. `bounds.length()`
+// stands for the `+Inf` bucket.
+fn exemplar_in(
+  exemplars : Array[@metric.Exemplar],
+  bounds : Array[(Double, Int64)],
+  index : Int32,
+) -> @metric.Exemplar? {
+  for ex in exemplars {
+    let mut at = bounds.length()
+    for i, entry in bounds {
+      if ex.value <= entry.0 {
+        at = i
+        break
+      }
+    }
+    if at == index {
+      return Some(ex)
+    }
+  }
+  None
+}
+
+///|
+// The populated buckets of one side as spans and deltas. A gap of one or two empty buckets is
+// carried as zero deltas inside the span rather than as a new span, as client_golang does, so
+// that the same buckets come out as the same bytes.
+fn spans_of(
+  buckets : Array[(Int32, Int64)],
+) -> (Array[(Int32, Int32)], Array[Int64]) {
+  let spans : Array[(Int32, Int32)] = []
+  let deltas : Array[Int64] = []
+  let mut previous = 0L
+  let mut next = 0
+  for n, entry in buckets {
+    let gap = entry.0 - next
+    if n == 0 || gap > 2 {
+      spans.push((gap, 0))
+    } else {
+      for _ in 0..<gap {
+        let last = spans.length() - 1
+        spans[last] = (spans[last].0, spans[last].1 + 1)
+        deltas.push(0L - previous)
+        previous = 0L
+      }
+    }
+    let last = spans.length() - 1
+    spans[last] = (spans[last].0, spans[last].1 + 1)
+    deltas.push(entry.1 - previous)
+    previous = entry.1
+    next = entry.0 + 1
+  }
+  (spans, deltas)
+}
+
+///|
+fn span(offset : Int32, length : Int32) -> Bytes {
+  let body = Buffer()
+  append_sint(body, 1, offset.to_int64())
+  append_uint(body, 2, length.to_int64())
+  body.to_bytes()
+}
+
+///|
 fn histogram(
   count : Int64,
   sum : Double,
   buckets : Array[(Double, Int64)],
+  exemplars : Array[@metric.Exemplar],
+  sparse : @metric.Sparse?,
 ) -> Bytes {
   let body = Buffer()
   append_uint(body, 1, count)
   append_double(body, 2, sum)
   // The +Inf bucket is not written: the count is that bucket, and a scraper
-  // adds it back, as client_golang leaves it out.
-  for entry in buckets {
+  // adds it back, as client_golang leaves it out. It is written when it carries an
+  // exemplar, which has nowhere else to go.
+  for i, entry in buckets {
     if entry.0 != 1.0 / 0.0 {
-      append_message(body, 3, bucket(entry.0, entry.1))
+      append_message(
+        body,
+        3,
+        bucket(entry.0, entry.1, exemplar_in(exemplars, buckets, i)),
+      )
+    }
+  }
+  if exemplar_in(exemplars, buckets, buckets.length()) is Some(ex) {
+    append_message(body, 3, bucket(1.0 / 0.0, count, Some(ex)))
+  }
+  if sparse is Some(native) {
+    append_sint(body, 5, native.schema.to_int64())
+    append_double(body, 6, native.zero_threshold)
+    append_uint(body, 7, native.zero_count)
+    let (negative, negative_deltas) = spans_of(native.negative)
+    let (positive, positive_deltas) = spans_of(native.positive)
+    for s in negative {
+      append_message(body, 9, span(s.0, s.1))
+    }
+    for d in negative_deltas {
+      append_sint(body, 10, d)
+    }
+    // A native histogram with no observation and an exact zero bucket would otherwise look
+    // like a classic one; an empty span says it is native.
+    if native.zero_threshold == 0.0 &&
+      native.zero_count == 0L &&
+      positive.is_empty() &&
+      negative.is_empty() {
+      append_message(body, 12, span(0, 0))
+    }
+    for s in positive {
+      append_message(body, 12, span(s.0, s.1))
+    }
+    for d in positive_deltas {
+      append_sint(body, 13, d)
+    }
+  }
+  if sparse is Some(native) {
+    for ex in native.exemplars {
+      append_message(body, 16, exemplar_proto(ex))
     }
   }
   body.to_bytes()
@@ -207,7 +342,17 @@ fn histogram_metric(point : @metric.Point) -> Bytes {
   }
   match point.value {
     @metric.Value::Buckets(buckets~, sum~, count~) =>
-      append_message(body, 7, histogram(count, sum, buckets))
+      append_message(
+        body,
+        7,
+        histogram(count, sum, buckets, point.exemplars, None),
+      )
+    @metric.Value::Native(buckets~, sparse~, sum~, count~) =>
+      append_message(
+        body,
+        7,
+        histogram(count, sum, buckets, point.exemplars, Some(sparse)),
+      )
     _ => ()
   }
   append_timestamp(body, point.timestamp)
@@ -266,7 +411,8 @@ fn encode_family_metrics(
     @metric.Value::State(_) => state_metrics(family, point, out)
     @metric.Value::Number(_) =>
       append_message(out, 4, number_metric(family, point))
-    @metric.Value::Buckets(_) => append_message(out, 4, histogram_metric(point))
+    @metric.Value::Buckets(_) | @metric.Value::Native(_) =>
+      append_message(out, 4, histogram_metric(point))
     @metric.Value::Quantiles(_) => append_message(out, 4, summary_metric(point))
   }
 }

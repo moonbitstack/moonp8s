@@ -221,7 +221,10 @@ fn encode_text_family(
           }
         }
       }
-      @metric.Value::Buckets(buckets~, sum~, count~) => {
+      // Text carries the classic buckets of a native histogram; the native ones exist only in
+      // protobuf.
+      @metric.Value::Buckets(buckets~, sum~, count~)
+      | @metric.Value::Native(buckets~, sum~, count~, ..) => {
         for entry in buckets {
           write_line(
             sb,
@@ -430,7 +433,10 @@ fn encode_om_family(sb : StringBuilder, family : @metric.MetricFamily) -> Unit {
           }
         }
       }
-      @metric.Value::Buckets(buckets~, sum~, count~) => {
+      // Text carries the classic buckets of a native histogram; the native ones exist only in
+      // protobuf.
+      @metric.Value::Buckets(buckets~, sum~, count~)
+      | @metric.Value::Native(buckets~, sum~, count~, ..) => {
         let mut low = neg_inf
         for entry in buckets {
           write_line(

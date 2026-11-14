@@ -48,8 +48,30 @@ pub fn Exemplar::new(
 pub(all) enum Value {
   Number(Double)
   Buckets(buckets~ : Array[(Double, Int64)], sum~ : Double, count~ : Int64)
+  /// A histogram with native buckets, and the classic ones it also keeps (none when it keeps
+  /// only native ones). Text formats carry the classic part; protobuf carries both.
+  Native(
+    buckets~ : Array[(Double, Int64)],
+    sparse~ : Sparse,
+    sum~ : Double,
+    count~ : Int64
+  )
   Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)
   State(states~ : Array[(String, Bool)])
+}
+
+///|
+/// The native buckets of a histogram at one moment. `positive` and `negative` hold the
+/// populated buckets as `(key, count)` in key order, bucket `key` covering
+/// (2^((key-1)/2^schema), 2^(key/2^schema)] on its side; `zero_count` counts the observations
+/// within `zero_threshold` of zero; `exemplars` are the ones kept for the native buckets.
+pub(all) struct Sparse {
+  schema : Int32
+  zero_threshold : Double
+  zero_count : Int64
+  positive : Array[(Int32, Int64)]
+  negative : Array[(Int32, Int64)]
+  exemplars : Array[Exemplar]
 }
 
 ///|

@@ -2,5 +2,6 @@
 // an exposition is written from. The data model follows OpenMetrics 1.0
 // (https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md).
 import {
+  "moonbitlang/core/env",
   "moonbitlang/core/math",
 }

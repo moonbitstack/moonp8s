@@ -146,24 +146,59 @@ pub fn exponential_range(
 
 ///|
 /// A histogram with cumulative buckets. Counts are kept per bucket and made
-/// cumulative on snapshot, which is what the wire format carries.
+/// cumulative on snapshot, which is what the wire format carries. With `native`
+/// it also keeps native buckets, or only those when no classic buckets were asked
+/// for.
 pub struct Histogram {
   priv bounds : Array[Double]
   priv counts : Array[Int64]
   priv mut sum : Double
   priv mut count : Int64
   priv exemplars : Array[Exemplar?]
-  priv created : Double?
+  priv mut created : Double?
+  priv sparse : SparseState?
+  priv clock : () -> Double
 }
 
 ///|
-/// A histogram over `buckets` (the shared defaults unless given).
+/// The time in Unix seconds, which is what a native histogram's resets are measured in.
+fn wall() -> Double {
+  @env.now().to_double() / 1000.0
+}
+
+///|
+/// A histogram over `buckets`. Without `buckets` it uses the shared defaults, or none at
+/// all when `native` is given, which is what client_golang does with a bucket factor and no
+/// bucket list. `native` adds native buckets with those settings; `clock` is the time in Unix
+/// seconds the native buckets' resets are measured by, the system clock unless given.
 pub fn Histogram::new(
-  buckets~ : Array[Double] = default_buckets(),
+  buckets? : Array[Double],
   created? : Double,
+  native? : Native,
+  clock? : () -> Double,
 ) -> Histogram raise Refused {
-  check_buckets(buckets)
-  let bounds = copy_bounds(buckets)
+  let bounds = match (buckets, native) {
+    (Some(given), Some(_)) if given.length() == 0 => []
+    (Some(given), _) => {
+      check_buckets(given)
+      copy_bounds(given)
+    }
+    (None, Some(_)) => []
+    (None, None) => default_buckets()
+  }
+  let clock = clock.unwrap_or(wall)
+  let sparse = match native {
+    Some(config) => {
+      if !(config.factor > 1.0) {
+        raise Refused(
+          "a native histogram's factor must be above 1, got " +
+          config.factor.to_string(),
+        )
+      }
+      Some(SparseState::new(config, clock()))
+    }
+    None => None
+  }
   let n = bounds.length() + 1
   {
     bounds,
@@ -172,19 +207,15 @@ pub fn Histogram::new(
     count: 0L,
     exemplars: Array::make(n, None),
     created,
+    sparse,
+    clock,
   }
 }
 
 ///|
-/// Record one observation in the first bucket whose bound it does not exceed,
-/// or in the `+Inf` bucket when it exceeds every bound.
-pub fn Histogram::observe(
-  self : Histogram,
-  v : Double,
-  exemplar? : Exemplar,
-) -> Unit {
-  self.sum = self.sum + v
-  self.count = self.count + 1L
+/// The classic bucket a value falls in: the first whose bound it does not exceed, or the
+/// `+Inf` bucket.
+fn Histogram::bucket_of(self : Histogram, v : Double) -> Int32 {
   let mut index = self.bounds.length()
   for i = 0; i < self.bounds.length(); i = i + 1 {
     if v <= self.bounds[i] {
@@ -192,17 +223,110 @@ pub fn Histogram::observe(
       break
     }
   }
+  index
+}
+
+///|
+/// Count one observation in the classic buckets, the sum and the count, and in the native
+/// buckets when there are some.
+fn Histogram::count_in(self : Histogram, v : Double) -> Unit {
+  let index = self.bucket_of(v)
   self.counts[index] = self.counts[index] + 1L
+  self.sum = self.sum + v
+  self.count = self.count + 1L
+  match self.sparse {
+    Some(sparse) if v == v => sparse.observe(v)
+    _ => ()
+  }
+}
+
+///|
+/// Everything counted goes back to zero; exemplars stay, as they do in client_golang.
+fn Histogram::clear(self : Histogram, at : Double) -> Unit {
+  for i = 0; i < self.counts.length(); i = i + 1 {
+    self.counts[i] = 0L
+  }
+  self.sum = 0.0
+  self.count = 0L
+  if self.sparse is Some(sparse) {
+    sparse.clear()
+    sparse.last_reset = at
+  }
+  if self.created is Some(_) {
+    self.created = Some(at)
+  }
+}
+
+///|
+/// A reset that was put off until `min_reset` had passed happens once its time has come.
+fn Histogram::settle(self : Histogram, now : Double) -> Unit {
+  guard self.sparse is Some(sparse) else { return }
+  guard sparse.reset_at is Some(at) && now >= at else { return }
+  self.clear(at)
+  sparse.reset_at = None
+}
+
+///|
+/// Keep the native buckets within `max_buckets`: reset if `min_reset` has passed since the
+/// last reset, else put a reset off until it has, then widen the zero bucket if allowed, else
+/// halve the resolution.
+fn Histogram::limit(self : Histogram, v : Double, now : Double) -> Unit {
+  guard self.sparse is Some(sparse) else { return }
+  let max = sparse.config.max_buckets
+  if max == 0 || sparse.buckets() <= max {
+    return
+  }
+  let wait = sparse.config.min_reset
+  if wait > 0.0 && sparse.reset_at is None && now - sparse.last_reset >= wait {
+    self.clear(now)
+    // The observation that went over the limit is kept, so the reset loses nothing new.
+    self.count_in(v)
+    return
+  }
+  if wait > 0.0 && sparse.reset_at is None {
+    sparse.reset_at = Some(sparse.last_reset + wait)
+  }
+  if sparse.widen_zero() {
+    return
+  }
+  sparse.coarsen()
+}
+
+///|
+/// Record one observation in the first bucket whose bound it does not exceed,
+/// or in the `+Inf` bucket when it exceeds every bound, and in its native bucket.
+/// NaN counts in the sum and the count but in no native bucket.
+pub fn Histogram::observe(
+  self : Histogram,
+  v : Double,
+  exemplar? : Exemplar,
+) -> Unit {
+  let now = if self.sparse is Some(_) { (self.clock)() } else { 0.0 }
+  self.settle(now)
+  self.count_in(v)
+  if v == v {
+    self.limit(v, now)
+  }
   match exemplar {
-    Some(e) => self.exemplars[index] = Some(e)
+    Some(e) => {
+      self.exemplars[self.bucket_of(v)] = Some(e)
+      match self.sparse {
+        Some(sparse) if v == v =>
+          sparse.keep_exemplar(e, e.timestamp.unwrap_or(now))
+        _ => ()
+      }
+    }
     None => ()
   }
 }
 
 ///|
 /// The snapshot of this histogram: cumulative bucket counts, the sum, and the
-/// total count, with the retained exemplars.
+/// total count, with the retained exemplars, and the native buckets when it keeps them.
 pub fn Histogram::snapshot(self : Histogram) -> Point {
+  if self.sparse is Some(_) {
+    self.settle((self.clock)())
+  }
   let cumulative : Array[(Double, Int64)] = []
   let mut acc = 0L
   for i = 0; i < self.bounds.length(); i = i + 1 {
@@ -216,13 +340,17 @@ pub fn Histogram::snapshot(self : Histogram) -> Point {
       None => ()
     }
   }
-  {
-    labels: [],
-    value: Buckets(buckets=cumulative, sum=self.sum, count=self.count),
-    timestamp: None,
-    created: self.created,
-    exemplars,
+  let value = match self.sparse {
+    Some(sparse) =>
+      Native(
+        buckets=cumulative,
+        sparse=sparse.value(),
+        sum=self.sum,
+        count=self.count,
+      )
+    None => Buckets(buckets=cumulative, sum=self.sum, count=self.count)
   }
+  { labels: [], value, timestamp: None, created: self.created, exemplars, }
 }
 
 ///|

@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonbitstack/moonp8s/metric"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub let buckets : Array[Double]
 
@@ -17,6 +21,8 @@ pub fn is_valid_metric_name(String) -> Bool
 pub fn is_valid_unit(String) -> Bool
 
 pub fn linear(Double, Double, Int32) -> Array[Double] raise Refused
+
+pub let native : Native
 
 pub fn point_of(Value) -> Point
 
@@ -91,7 +97,7 @@ pub struct Histogram {
   // private fields
 }
 pub fn Histogram::kind(Self) -> Kind
-pub fn Histogram::new(buckets? : Array[Double], created? : Double) -> Self raise Refused
+pub fn Histogram::new(buckets? : Array[Double], created? : Double, native? : Native, clock? : () -> Double) -> Self raise Refused
 pub fn Histogram::observe(Self, Double, exemplar? : Exemplar) -> Unit
 pub fn Histogram::points(Self) -> Array[Point]
 pub fn Histogram::snapshot(Self) -> Point
@@ -140,6 +146,21 @@ pub(all) struct MetricFamily {
   metrics : Array[Point]
 }
 
+#derive(Eq, @debug.Debug)
+pub(all) struct Native {
+  factor : Double
+  zero_threshold : Double
+  max_buckets : Int32
+  min_reset : Double
+  max_zero_threshold : Double
+  max_exemplars : Int32
+  exemplar_ttl : Double
+}
+pub fn Native::equal(Self, Self) -> Bool
+pub fn Native::new(factor? : Double, zero_threshold? : Double, max_buckets? : Int32, min_reset? : Double, max_zero_threshold? : Double, max_exemplars? : Int32, exemplar_ttl? : Double) -> Self
+pub fn Native::not_equal(Self, Self) -> Bool
+pub fn Native::to_repr(Self) -> @debug.Repr
+
 pub(all) struct Point {
   labels : Array[(String, String)]
   value : Value
@@ -172,10 +193,19 @@ pub fn Registry::add(Self, &Collector) -> Unit
 pub fn Registry::collect(Self, at? : Double) -> Array[MetricFamily]
 pub fn Registry::counter(Self, String, String, unit? : String) -> Counter raise Refused
 pub fn Registry::gauge(Self, String, String, unit? : String) -> Gauge raise Refused
-pub fn Registry::histogram(Self, String, String, buckets? : Array[Double], unit? : String) -> Histogram raise Refused
+pub fn Registry::histogram(Self, String, String, buckets? : Array[Double], unit? : String, native? : Native) -> Histogram raise Refused
 pub fn Registry::new(prefix? : String, labels? : Array[(String, String)]) -> Self raise Refused
 pub fn Registry::register(Self, String, String, &Metric, unit? : String) -> Unit raise Refused
 pub fn Registry::sub(Self, prefix~ : String, labels? : Array[(String, String)]) -> Self raise Refused
+
+pub(all) struct Sparse {
+  schema : Int32
+  zero_threshold : Double
+  zero_count : Int64
+  positive : Array[(Int32, Int64)]
+  negative : Array[(Int32, Int64)]
+  exemplars : Array[Exemplar]
+}
 
 pub struct StateSet {
   // private fields
@@ -218,6 +248,7 @@ pub impl[L, M : Metric] Metric for TypedFamily[L, M]
 pub(all) enum Value {
   Number(Double)
   Buckets(buckets~ : Array[(Double, Int64)], sum~ : Double, count~ : Int64)
+  Native(buckets~ : Array[(Double, Int64)], sparse~ : Sparse, sum~ : Double, count~ : Int64)
   Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)
   State(states~ : Array[(String, Bool)])
 }

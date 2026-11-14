@@ -189,6 +189,14 @@ fn part_of(
             )
             entries.push(sum_entry(family, point, sum))
           }
+          // Native buckets change resolution as they fill, so files written by different
+          // processes cannot be added bucket by bucket; prometheus_client refuses them in
+          // multiprocess mode too.
+          @metric.Value::Native(_) =>
+            raise @metric.Refused(
+              family.name +
+              " has native buckets, which multiprocess mode does not carry",
+            )
           _ =>
             raise @metric.Refused(
               family.name + " is a histogram without buckets",

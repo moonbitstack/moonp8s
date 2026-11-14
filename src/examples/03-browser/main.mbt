@@ -477,6 +477,15 @@ fn value_text(value : @metric.Value) -> String {
       @expo.format_float(sum) +
       " count=" +
       count.to_string()
+    Native(buckets~, sparse~, sum~, count~) =>
+      "buckets=" +
+      buckets.length().to_string() +
+      " native=" +
+      (sparse.positive.length() + sparse.negative.length()).to_string() +
+      " sum=" +
+      @expo.format_float(sum) +
+      " count=" +
+      count.to_string()
     Quantiles(quantiles~, sum~, count~) =>
       "quantiles=" +
       quantiles.length().to_string() +

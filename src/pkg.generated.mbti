@@ -36,6 +36,8 @@ pub fn merge(Array[@multiproc.Part]) -> Array[@metric.MetricFamily] raise @metri
 
 pub fn middleware(@metric.Registry, now? : () -> Double) -> (((@http.Request) -> @http.Response) -> ((@http.Request) -> @http.Response)) raise @metric.Refused
 
+pub let native : @metric.Native
+
 pub fn negotiate(String) -> @expo.Format
 
 pub fn openmetrics(Array[@metric.MetricFamily]) -> String
@@ -83,6 +85,8 @@ pub using @metric {type MetricFamily}
 
 pub using @multiproc {type Mode}
 
+pub using @metric {type Native}
+
 pub using @multiproc {type Part}
 
 pub using @metric {type Point}
@@ -94,6 +98,8 @@ pub using @metric {type ProcessStats}
 pub using @push {type PushRequest}
 
 pub using @metric {type Registry}
+
+pub using @metric {type Sparse}
 
 pub using @metric {type StateSet}
 

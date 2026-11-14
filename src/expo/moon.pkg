@@ -9,3 +9,7 @@ import {
   "moonbitstack/moonp8s/metric",
   "moonbitstack/moonproto/wire",
 }
+
+import {
+  "moonbitstack/moonbase/base16",
+} for "wbtest"
