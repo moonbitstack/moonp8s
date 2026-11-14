@@ -47,7 +47,9 @@ func bits(values []float64) []string {
 }
 
 // mixed is a spread of magnitudes and signs, with zero, the extremes, and values on and beside
-// powers of two, which are bucket boundaries at every schema.
+// powers of two, which are bucket boundaries at every schema. It holds one infinity, positive
+// for an odd seed and negative for an even one: both together make the sum a NaN, whose sign
+// bit is the processor's choice (set on x86, clear on arm64), not the library's.
 func mixed(seed int64, n int) []float64 {
 	r := rand.New(rand.NewSource(seed))
 	var out []float64
@@ -62,8 +64,12 @@ func mixed(seed int64, n int) []float64 {
 		p := math.Ldexp(1, k)
 		out = append(out, p, math.Nextafter(p, 0), math.Nextafter(p, math.Inf(1)), -p)
 	}
+	inf := math.Inf(1)
+	if seed%2 == 0 {
+		inf = math.Inf(-1)
+	}
 	out = append(out, 0, 0, 1e-300, 5e-324, -5e-324, 1e300, -1e300, math.MaxFloat64,
-		-math.MaxFloat64, math.Inf(1), math.Inf(-1), 2.938735877055719e-39)
+		-math.MaxFloat64, inf, 2.938735877055719e-39)
 	return out
 }
 

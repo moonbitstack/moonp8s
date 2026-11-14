@@ -83,6 +83,7 @@ jobs:
         run: |
           (cd scripts/native/compare && go mod tidy && go run .) > "$RUNNER_TEMP/vectors.json"
           python3 scripts/native/gen_vectors.py "$RUNNER_TEMP/vectors.json"
+          moon fmt
           git diff --exit-code src/expo/native_vectors_wbtest.mbt
 
       - name: native histograms, scraped by Prometheus beside client_golang
