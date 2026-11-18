@@ -54,7 +54,7 @@ pub(all) enum Value {
     buckets~ : Array[(Double, Int64)],
     sparse~ : Sparse,
     sum~ : Double,
-    count~ : Int64
+    count~ : Int64,
   )
   Quantiles(quantiles~ : Array[(Double, Double)], sum~ : Double, count~ : Int64)
   State(states~ : Array[(String, Bool)])
